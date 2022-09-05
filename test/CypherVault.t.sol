@@ -65,6 +65,12 @@ contract CypherVaultTest is Test {
     escrow.addToWhitelist(whales);
     vm.stopPrank();
 
+    startHoax(charlie, charlie);
+    patchedContract.deposit{ value: 100 }();
+    token.approve(address(patchedContract), 100);
+    patchedContract.deposit(address(token), 100);
+    vm.stopPrank();
+
     // attackContract = new Attack(payable(address(vulnerableContract)));
   }
 
@@ -94,9 +100,27 @@ contract CypherVaultTest is Test {
   // we deny tx
   // protocol denies tx
 
-  function testWithdrawIfWhitelisted() public {}
+  function testWithdrawETHIfWhitelisted() public {
+    uint256 prevBalance = charlie.balance;
 
-  function testWithdrawIfBelowThreshold() public {}
+    vm.prank(charlie);
+    patchedContract.withdraw(51 wei);
+
+    assertEq(charlie.balance, prevBalance + 51);
+  }
+
+  function testWithdrawERC20IfWhitelisted() public {
+    uint256 prevBalance = token.balanceOf(charlie);
+
+    vm.prank(charlie);
+    patchedContract.withdraw(address(token), 51);
+
+    assertEq(token.balanceOf(charlie), prevBalance + 51);
+  }
+
+  function testWithdrawETHIfBelowThreshold() public {}
+
+  function testWithdrawERC20IfBelowThreshold() public {}
 
   function testCannotWithdrawETHIfRevokedByOracle() public {}
 
