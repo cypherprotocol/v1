@@ -9,7 +9,7 @@ import {CypherRegistry} from "src/CypherRegistry.sol";
 contract Deploy is Script {
 
   /// @notice The main script entrypoint
-  /// @return greeter The deployed contract
+  /// @return cypherRegistry The deployed contract
   function run() external returns (CypherRegistry cypherRegistry) {
     vm.startBroadcast();
     cypherRegistry = new CypherRegistry();
