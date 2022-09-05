@@ -3,16 +3,16 @@ pragma solidity ^0.8.15;
 
 import {Script} from 'forge-std/Script.sol';
 
-import {Greeter} from "src/Greeter.sol";
+import {CypherVault} from "src/CypherVault.sol";
 
 /// @notice A very simple deployment script
 contract Deploy is Script {
 
   /// @notice The main script entrypoint
   /// @return greeter The deployed contract
-  function run() external returns (Greeter greeter) {
+  function run() external returns (CypherVault cypherVault) {
     vm.startBroadcast();
-    greeter = new Greeter("GM");
+    cypherVault = new CypherVault();
     vm.stopBroadcast();
   }
 }
