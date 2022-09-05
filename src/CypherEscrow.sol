@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {IERC20} from "./interfaces/IERC20.sol";
-import {IWETH9} from "./interfaces/IWETH9.sol";
+import { IERC20 } from "./interfaces/IERC20.sol";
+import { IWETH9 } from "./interfaces/IWETH9.sol";
 
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
@@ -61,6 +61,39 @@ contract CypherEscrow is ReentrancyGuard {
     timeLimit = _timeLimit;
     owner = _owner;
     sourceContract = _sourceContract;
+  }
+
+  /// @notice Check if an ETH withdraw is valid
+  /// @param to The address to withdraw to
+  /// @param amount The amount to withdraw
+  /// @param chainId_ The chain id of the token contract
+  function escrowETH(
+    address to,
+    uint256 amount,
+    uint256 chainId_
+  ) external {
+    // check if the stop has been overwritten by protocol owner on the frontend
+    require(msg.sender == sourceContract, "ONLY_SOURCE_CONTRACT");
+    require(chainId == chainId_, "CHAIN_ID_MISMATCH");
+
+    // if they are whitelisted or amount is less than threshold, just transfer the tokens
+    if (amount < tokenThreshold || whitelist[msg.sender] == true) {
+      (bool success, ) = address(to).call{ value: amount }("");
+      require(success, "TRANSFER_FAILED");
+    } else if (tokenInfo[msg.sender].initialized == false) {
+      // if they havent been cached
+      // add them to the cache
+      addToLimiter(to, address(0x0), amount, chainId_);
+
+      emit AmountStopped(to, address(0x0), amount, block.timestamp);
+    } else {
+      // check if they have been approved
+      require(tokenInfo[msg.sender].approved == true, "NOT_APPROVED");
+
+      // if so, allow them to withdraw the full amount
+      (bool success, ) = address(to).call{ value: amount }("");
+      require(success, "TRANSFER_FAILED");
+    }
   }
 
   /// @notice Check if an ERC20 withdraw is valid
@@ -129,9 +162,18 @@ contract CypherEscrow is ReentrancyGuard {
 
     tokenInfo[to].amount -= amount;
 
-    // our contract needs approval to swap tokens
-    bool result = IERC20(tokenContract).transferFrom(tokenContract, to, amount);
-    require(result == true, "TRANSFER_FAILED");
+    if (tokenInfo[to].asset == address(0x0)) {
+      (bool success, ) = address(to).call{ value: amount }("");
+      require(success, "TRANSFER_FAILED");
+    } else {
+      // our contract needs approval to swap tokens
+      bool result = IERC20(tokenContract).transferFrom(
+        tokenContract,
+        to,
+        amount
+      );
+      require(result == true, "TRANSFER_FAILED");
+    }
 
     emit AmountSent(to, amount, block.timestamp);
   }
