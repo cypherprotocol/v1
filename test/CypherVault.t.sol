@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import { CypherEscrow } from "../src/CypherEscrow.sol";
-import { Attack } from "./exploit/Attack.sol";
-import { DAOWallet } from "./exploit/DAOWallet.sol";
-import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
-import { CypherRegistry } from "../src/CypherRegistry.sol";
-import { MockERC20 } from "./mocks/MockERC20.sol";
+import {CypherEscrow} from "../src/CypherEscrow.sol";
+import {Attack} from "./exploit/Attack.sol";
+import {DAOWallet} from "./exploit/DAOWallet.sol";
+import {SafeDAOWallet} from "./exploit/SafeDAOWallet.sol";
+import {CypherRegistry} from "../src/CypherRegistry.sol";
+import {MockERC20} from "./mocks/MockERC20.sol";
 
 contract CypherVaultTest is Test {
   Attack attackContract;
