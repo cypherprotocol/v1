@@ -8,4 +8,10 @@ interface ICypherEscrow {
     uint256 amount,
     uint256 chainId_
   ) external;
+
+  function escrowETH(
+    address to,
+    uint256 amount,
+    uint256 chainId_
+  ) external;
 }
