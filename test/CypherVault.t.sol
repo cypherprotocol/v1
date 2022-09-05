@@ -31,9 +31,11 @@ contract CypherVaultTest is Test {
 
     registry = new CypherRegistry();
 
+
     // deploy Reentrance contract
     vulnerableContract = new DAOWallet();
     vulnerableContract.deposit{ value: 100 }();
+    attackContract = new Attack(payable(address(vulnerableContract)));
     vm.stopPrank();
 
     startHoax(bob, bob);
