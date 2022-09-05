@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 import { CypherRegistry } from "./CypherRegistry.sol";
 
-abstract contract CypherVault {
+abstract contract CypherProtocol {
   address registry;
-  address delegator;
+  address architect;
 
-  constructor(address _delegator, address _registry) {
-    delegator = _delegator;
+  constructor(address _architect, address _registry) {
+    architect = _architect;
     registry = _registry;
   }
 
@@ -15,7 +15,7 @@ abstract contract CypherVault {
       address(CypherRegistry(registry).getEscrowForProtocol(address(this)));
   }
 
-  function getDelegator() external view returns (address) {
-    return delegator;
+  function getArchitect() external view returns (address) {
+    return architect;
   }
 }

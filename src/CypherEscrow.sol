@@ -12,7 +12,7 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 contract CypherEscrow is ReentrancyGuard {
   address public sourceContract;
 
-  mapping(address => bool) isAuthorized;
+  mapping(address => bool) isOracle;
 
   address public token;
 
@@ -43,8 +43,8 @@ contract CypherEscrow is ReentrancyGuard {
     uint256 timestamp
   );
 
-  modifier onlySourceContractOwner() {
-    bool isAuthorized = isAuthorized[msg.sender];
+  modifier onlyOracle() {
+    bool isAuthorized = isOracle[msg.sender];
     require(isAuthorized);
     _;
   }
@@ -55,7 +55,7 @@ contract CypherEscrow is ReentrancyGuard {
     address _token,
     uint256 _tokenThreshold,
     uint256 _timeLimit,
-    address[] memory authorizedManagers
+    address[] memory _oracles
   ) {
     token = _token;
     chainId = _chainId;
@@ -63,8 +63,8 @@ contract CypherEscrow is ReentrancyGuard {
     timeLimit = _timeLimit;
     sourceContract = _sourceContract;
 
-    for (uint256 i = 0; i < authorizedManagers.length; i++) {
-      isAuthorized[authorizedManagers[i]] = true;
+    for (uint256 i = 0; i < _oracles.length; i++) {
+      isOracle[_oracles[i]] = true;
     }
   }
 
@@ -159,7 +159,7 @@ contract CypherEscrow is ReentrancyGuard {
   /// @param tokenContract The contract address of the token to send
   function releaseTokens(address to, address tokenContract)
     external
-    onlySourceContractOwner
+    onlyOracle
     nonReentrant
   {
     require(tokenInfo[to].approved = true, "NOT_APPROVED");
@@ -185,16 +185,13 @@ contract CypherEscrow is ReentrancyGuard {
 
   /// @notice Set the timelimit for the tx before reverting
   /// @param _timeLimit The time limit in seconds
-  function setTimeLimit(uint256 _timeLimit) external onlySourceContractOwner {
+  function setTimeLimit(uint256 _timeLimit) external onlyOracle {
     timeLimit = _timeLimit;
   }
 
   /// @notice Add an address to the whitelist
   /// @param to The address to add to the whitelist
-  function addToWhitelist(address[] memory to)
-    external
-    onlySourceContractOwner
-  {
+  function addToWhitelist(address[] memory to) external onlyOracle {
     for (uint256 i = 0; i < to.length; i++) {
       whitelist[to[i]] = true;
     }
@@ -202,7 +199,7 @@ contract CypherEscrow is ReentrancyGuard {
 
   /// @notice Approve a withdraw to a user
   /// @param to The address to approve to
-  function approveWithdraw(address to) external onlySourceContractOwner {
+  function approveWithdraw(address to) external onlyOracle {
     tokenInfo[to].approved = true;
   }
 }
