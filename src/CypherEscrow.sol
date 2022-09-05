@@ -82,7 +82,7 @@ contract CypherEscrow is ReentrancyGuard {
     require(chainId == chainId_, "CHAIN_ID_MISMATCH");
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
-    if (amount < tokenThreshold || whitelist[msg.sender] == true) {
+    if (amount < tokenThreshold || isWhitelisted[msg.sender] == true) {
       (bool success, ) = address(to).call{ value: amount }("");
       require(success, "TRANSFER_FAILED");
     } else if (tokenInfo[msg.sender].initialized == false) {
@@ -117,7 +117,7 @@ contract CypherEscrow is ReentrancyGuard {
     require(chainId == chainId_, "CHAIN_ID_MISMATCH");
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
-    if (amount < tokenThreshold || whitelist[msg.sender] == true) {
+    if (amount < tokenThreshold || isWhitelisted[msg.sender] == true) {
       bool result = IERC20(asset).transferFrom(sourceContract, to, amount);
       require(result, "TRANSFER_FAILED");
     } else if (tokenInfo[msg.sender].initialized == false) {

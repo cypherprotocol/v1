@@ -59,7 +59,7 @@ contract CypherVaultTest is Test {
       )
     );
 
-    address[] whales = new address[](1);
+    address[] memory whales = new address[](1);
     whales[0] = charlie;
 
     escrow.addToWhitelist(whales);
