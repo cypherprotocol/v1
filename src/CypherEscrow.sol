@@ -11,7 +11,8 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 /// @notice Assumes the incoming asset is already wrapped from a token pool
 contract CypherEscrow is ReentrancyGuard {
   address public sourceContract;
-  address public owner;
+
+  mapping(address => bool) isAuthorized;
 
   address public token;
 
@@ -43,7 +44,8 @@ contract CypherEscrow is ReentrancyGuard {
   );
 
   modifier onlySourceContractOwner() {
-    require(msg.sender == owner);
+    bool isAuthorized = isAuthorized[msg.sender];
+    require(isAuthorized);
     _;
   }
 
@@ -53,14 +55,17 @@ contract CypherEscrow is ReentrancyGuard {
     address _token,
     uint256 _tokenThreshold,
     uint256 _timeLimit,
-    address _owner
+    address[] memory authorizedManagers
   ) {
     token = _token;
     chainId = _chainId;
     tokenThreshold = _tokenThreshold;
     timeLimit = _timeLimit;
-    owner = _owner;
     sourceContract = _sourceContract;
+
+    for (uint256 i = 0; i < authorizedManagers.length; i++) {
+      isAuthorized[authorizedManagers[i]] = true;
+    }
   }
 
   /// @notice Check if an ETH withdraw is valid

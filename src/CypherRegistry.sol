@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {CypherEscrow} from "./CypherEscrow.sol";
-import {ICypherVault} from "./interfaces/ICypherVault.sol";
+import { CypherEscrow } from "./CypherEscrow.sol";
+import { ICypherVault } from "./interfaces/ICypherVault.sol";
 
 contract CypherRegistry {
   mapping(address => CypherEscrow) public getEscrowForProtocol;
@@ -21,13 +21,16 @@ contract CypherRegistry {
     uint256 tokenThreshold,
     uint256 timeLimit
   ) public delegatorOnly(protocol) {
+    address[] memory managers = new address[](1);
+    managers[0] = msg.sender;
+
     CypherEscrow escrow = new CypherEscrow(
       protocol,
       chainId,
       token,
       tokenThreshold,
       timeLimit,
-      msg.sender
+      managers
     );
     getEscrowForProtocol[protocol] = escrow;
   }
