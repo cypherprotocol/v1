@@ -1,3 +1,3 @@
 CypherVaultTest:testBalances() (gas: 19539)
-CypherVaultTest:testEscrowWithdrawOverThreshold() (gas: 161407)
-CypherVaultTest:testEscrowWithdrawUnderThreshold() (gas: 75566)
+CypherVaultTest:testEscrowWithdrawOverThreshold() (gas: 161448)
+CypherVaultTest:testEscrowWithdrawUnderThreshold() (gas: 75607)
