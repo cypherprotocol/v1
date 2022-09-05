@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { IWETH9 } from "./interfaces/IWETH9.sol";
 
+import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
+
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 /// @notice Assumes the incoming asset is already wrapped from a token pool
@@ -120,6 +122,7 @@ contract CypherEscrow {
   function releaseTokens(address to, address tokenContract)
     external
     onlySourceContractOwner
+    nonReentrant
   {
     require(tokenInfo[to].approved = true, "NOT_APPROVED");
     uint256 amount = tokenInfo[to].amount;
