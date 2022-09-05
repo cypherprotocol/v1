@@ -114,4 +114,24 @@ contract CypherVaultTest is Test {
     (bool sent, ) = address(attackContract).call{ value: msg.value }("");
     require(sent, "Failed to send Ether");
   }
+
+
+  // user flows
+    // approved whale withdraws and everything works smoothly
+        // we approve tx
+        // protocol approves tx
+    // hacker withdraws ETH (WETH) and gets stopped
+        // we deny tx
+        // protocol denies tx
+    // hacker withdraws ERC20 and gets stopped
+        // we deny tx
+        // protocol denies tx
+    // hacker withdraws multiple ERC20's and gets stopped
+        // we deny tx
+        // protocol denies tx
+
+  // contracts
+    // CypherEscrow
+    // CypherVault
+    // CypherRegistry
 }
