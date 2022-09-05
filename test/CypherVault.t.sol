@@ -19,40 +19,57 @@ contract CypherVaultTest is Test {
 
   address alice = address(0xBEEF);
   address bob = address(0xDEAD);
+  address charlie = address(0x1337);
 
   MockERC20 token;
 
   function setUp() public {
+    // Create new ERC20 and issue to all users
     token = new MockERC20();
     token.mint(alice, 100);
     token.mint(bob, 100);
+    token.mint(charlie, 100);
 
-    startHoax(alice, alice);
-
+    // Deploy the protocol to escrow registry
     registry = new CypherRegistry();
 
+    // Deposit ETH and ERC20 into non-Cypher wallet
+    startHoax(alice, alice);
     vulnerableContract = new DAOWallet();
     vulnerableContract.deposit{ value: 100 }();
     token.approve(address(vulnerableContract), 100);
     vulnerableContract.deposit(address(token), 100);
-    attackContract = new Attack(payable(address(vulnerableContract)));
     vm.stopPrank();
 
+    // Deposit ETH and ERC20 into Cypher wallet
     startHoax(bob, bob);
-
     patchedContract = new SafeDAOWallet(bob, address(registry));
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
 
-    registry.createEscrow(
-      address(patchedContract),
-      1,
-      address(token),
-      50,
-      1 days
+    // Deploy escrow contract from designated architect
+    escrow = CypherEscrow(
+      registry.createEscrow(
+        address(patchedContract),
+        1,
+        address(token),
+        50,
+        1 days
+      )
     );
+
+    address[] whales = new address[](1);
+    whales[0] = charlie;
+
+    escrow.addToWhitelist(whales);
     vm.stopPrank();
+
+    // attackContract = new Attack(payable(address(vulnerableContract)));
+  }
+
+  function testMetadata() public {
+    assertEq(escrow.isWhitelisted(charlie), true);
   }
 
   function testBalances() public {
@@ -95,6 +112,7 @@ contract CypherVaultTest is Test {
   // sets timeLimit correctly
   // sets owner correctly
   // sets sourceContract correctly
+  // sets whitelist correct
   // escrowTokens
   // escrows the correct amount of tokens
   // only allows calls from the source contract

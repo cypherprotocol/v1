@@ -20,7 +20,7 @@ contract CypherRegistry {
     address token,
     uint256 tokenThreshold,
     uint256 timeLimit
-  ) public architectOnly(protocol) {
+  ) public architectOnly(protocol) returns (address) {
     address[] memory oracles = new address[](1);
     oracles[0] = msg.sender;
 
@@ -33,5 +33,7 @@ contract CypherRegistry {
       oracles
     );
     getEscrowForProtocol[protocol] = escrow;
+
+    return address(escrow);
   }
 }

@@ -22,7 +22,7 @@ contract CypherEscrow is ReentrancyGuard {
   uint256 public timePeriod;
 
   /// @notice Whales that are whitelisted to withdraw without rate limiting
-  mapping(address => bool) public whitelist;
+  mapping(address => bool) public isWhitelisted;
   /// @notice Request info mapping
   mapping(address => Transaction) public tokenInfo;
 
@@ -193,7 +193,7 @@ contract CypherEscrow is ReentrancyGuard {
   /// @param to The address to add to the whitelist
   function addToWhitelist(address[] memory to) external onlyOracle {
     for (uint256 i = 0; i < to.length; i++) {
-      whitelist[to[i]] = true;
+      isWhitelisted[to[i]] = true;
     }
   }
 
