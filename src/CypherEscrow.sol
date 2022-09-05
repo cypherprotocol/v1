@@ -9,7 +9,7 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 /// @notice Assumes the incoming asset is already wrapped from a token pool
-contract CypherEscrow {
+contract CypherEscrow is ReentrancyGuard {
   address public sourceContract;
   address public owner;
 
