@@ -10,7 +10,7 @@ import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
 
-contract RateLimiterTest is Test {
+contract CypherVaultTest is Test {
   Attack attackContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
@@ -74,33 +74,33 @@ contract RateLimiterTest is Test {
     assertEq(USDC.balanceOf(bob), 0);
   }
 
-  function testAttackOnVulnerableContract() public {
-    // send ETH to Attack contract so it can execute reentrancy attack
-    // sendAttackContractETH.call{value: 100}();
+//   function testAttackOnVulnerableContract() public {
+//     // send ETH to Attack contract so it can execute reentrancy attack
+//     sendAttackContractETH.call{value: 100}();
 
-    // get contract balances before attack
-    uint256 vulnerableContractBalanceBefore = vulnerableContract.balanceOf(
-      alice
-    );
-    assertEq(vulnerableContractBalanceBefore, 100);
+//     // get contract balances before attack
+//     uint256 vulnerableContractBalanceBefore = vulnerableContract.balanceOf(
+//       alice
+//     );
+//     assertEq(vulnerableContractBalanceBefore, 100);
 
-    // get contract balance
-    uint256 contractBalanceBeforeHack = vulnerableContract.balanceOf(
-      address(attackContract)
-    );
-    assertEq(contractBalanceBeforeHack, 0);
+//     // get contract balance
+//     uint256 contractBalanceBeforeHack = vulnerableContract.balanceOf(
+//       address(attackContract)
+//     );
+//     assertEq(contractBalanceBeforeHack, 0);
 
-    // attackContract.step1_causeOverflow();
-    // attackContract.step2_deplete();
+//     attackContract.step1_causeOverflow();
+//     attackContract.step2_deplete();
 
-    // assert that the balance of the contract is 0
-    // assertEq(vulnerableContract.balanceOf(address(attackContract)), 0);
+//     // assert that the balance of the contract is 0
+//     assertEq(vulnerableContract.balanceOf(address(attackContract)), 0);
 
-    // assert that the balance of the wallet is the same as the balance of the contract before being drained
-    // assertEq(patchedContract.balanceOf(address(rateLimiter)), 100);
-  }
+//     // assert that the balance of the wallet is the same as the balance of the contract before being drained
+//     assertEq(patchedContract.balanceOf(address(cypherEscrow)), 100);
+//   }
 
-  function testAttackOnPatchContract() public {}
+//   function testAttackOnPatchContract() public {}
 
   /// @notice Utility function
   function sendAttackContractETH() public payable {
