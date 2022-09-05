@@ -14,15 +14,15 @@ contract CypherRegistry {
     _;
   }
 
-  function createRateLimiter(
+  function createEscrow(
     address protocol,
     uint256 chainId,
     address token,
     uint256 tokenThreshold,
     uint256 timeLimit
   ) public architectOnly(protocol) {
-    address[] memory managers = new address[](1);
-    managers[0] = msg.sender;
+    address[] memory oracles = new address[](1);
+    oracles[0] = msg.sender;
 
     CypherEscrow escrow = new CypherEscrow(
       protocol,
@@ -30,7 +30,7 @@ contract CypherRegistry {
       token,
       tokenThreshold,
       timeLimit,
-      managers
+      oracles
     );
     getEscrowForProtocol[protocol] = escrow;
   }
