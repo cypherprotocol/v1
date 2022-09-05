@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import { CypherEscrow } from "./CypherEscrow.sol";
-import { ICypherVault } from "./interfaces/ICypherVault.sol";
+import {CypherEscrow} from "./CypherEscrow.sol";
+import {ICypherVault} from "./interfaces/ICypherVault.sol";
 
 contract CypherRegistry {
   mapping(address => CypherEscrow) public getEscrowForProtocol;
