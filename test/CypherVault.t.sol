@@ -132,6 +132,31 @@ contract CypherVaultTest is Test {
 
   // contracts
     // CypherEscrow
+        // sets token correctly
+        // sets chainId correctly
+        // sets tokenThreshold correctly
+        // sets timeLimit correctly
+        // sets owner correctly
+        // sets sourceContract correctly
+        // escrowTokens
+            // escrows the correct amount of tokens
+            // only allows calls from the source contract
+            // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+            // stores correct Transaction information
+            // emits AmountStopped if stopped
+        // escrowETH
+            // escrows the correct amount of tokens
+            // only allows calls from the source contract
+            // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+            // stores correct Transaction information
+            // emits AmountStopped if stopped
     // CypherVault
+        // gets the correct escrow
+        // gets the correct delegator
+        // sets the correct escrow
+        // sets the correct delegator
     // CypherRegistry
+        // creates the rate limiter with the correct variables
+        // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+
 }
