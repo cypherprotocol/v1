@@ -141,24 +141,24 @@ contract CypherVaultTest is Test {
     // escrows the correct amount of tokens
     function testEscrowsCorrectAmountOfTokens() public {}
     // only allows calls from the source contract
-    function testOnlySourceContractModifier() public {}
+    function testOnlySourceContractModifierERC20() public {}
     // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifier() public {}
+    function testCannotNonSourceContractCallModifierERC20() public {}
     // stores correct Transaction information
-    function testStoresCorrectTransactionInformation() public {}
+    function testStoresCorrectTransactionInformationERC20() public {}
     // emits AmountStopped if stopped
-    function testEmitAmountStoppedEvent() public {}
+    function testEmitAmountStoppedEventERC20() public {}
   // escrowETH
     // escrows the correct amount of tokens
     function testCorrectAmountOfETHEscrowed() public {}
     // only allows calls from the source contract
-    function testOnlySourceContractModifier() public {}
+    function testOnlySourceContractModifierETH() public {}
     // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifier() public {}
+    function testCannotNonSourceContractCallModifierETH() public {}
     // stores correct Transaction information
-    function testStoresCorrectTransactionInformation() public {}
+    function testStoresCorrectTransactionInformationETH() public {}
     // emits AmountStopped if stopped
-    function testEmitAmountStoppedEvent() public {}
+    function testEmitAmountStoppedEventETH() public {}
   // CypherVault
     // gets the correct escrow
     function testGetsCorrectEscrow() public {}
