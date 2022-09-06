@@ -170,5 +170,7 @@ contract CypherVaultTest is Test {
     function testSetsCorrectDelegator() public {}
   // CypherRegistry
     // creates the rate limiter with the correct variables
+    function testSetsCorrectEscrowInformation() public {}
     // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+    function testCannotAnyoneButDelegatorDeployContract() public {}
 }
