@@ -30,11 +30,12 @@ contract CypherVaultTest is Test {
     token.mint(hacker, 100);
     token.mint(architect, 100);
     token.mint(whale, 100);
+    token.mint(cypher, 100);
 
     // Deploy the protocol to escrow registry
     registry = new CypherRegistry();
 
-    // Deposit ETH and ERC20 into non-Cypher wallet
+    // Deposit ETH and ERC20 into non-Cypher, vulnerable contract
     startHoax(hacker, hacker);
     vulnerableContract = new DAOWallet();
     vulnerableContract.deposit{ value: 100 }();
@@ -42,7 +43,7 @@ contract CypherVaultTest is Test {
     vulnerableContract.deposit(address(token), 100);
     vm.stopPrank();
 
-    // Deposit ETH and ERC20 into Cypher wallet
+    // Deposit ETH and ERC20 into contract protected by Cypher
     startHoax(architect, architect);
     patchedContract = new SafeDAOWallet(architect, address(registry));
     patchedContract.deposit{ value: 100 }();
@@ -71,8 +72,6 @@ contract CypherVaultTest is Test {
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
     vm.stopPrank();
-
-    // attackContract = new Attack(payable(address(vulnerableContract)));
   }
 
   function testMetadata() public {
@@ -89,18 +88,22 @@ contract CypherVaultTest is Test {
 
   /* HACKER FLOWS */
   // ETH
+
+  function testSetUpAttack() public {
+    // check balance of DAO contract
+    assertEq(token.balanceOf(address(vulnerableContract)), 100);
+    attackContract = new Attack(payable(address(vulnerableContract)));
+    // hacker calls attackContract.attack
+    attackContract.attack{ value: 100 }(); // this fails, prob because we dont attach ether
+    // assertEq(token.balanceOf(address(vulnerableContract)), 0);
+    // assertEq(attackContract.getContractBalance(), 100);
+  }
+
   function testETHWithdrawStoppedCypherApproves() public {
     // hacker withdraws from patchContract
-
     // gets stopped
     // check to make sure he cannot withdraw on his own
     // cypher team releases
-    uint256 prevBalance = architect.balance;
-
-    vm.prank(architect);
-    patchedContract.withdraw(51 wei);
-
-    assertEq(architect.balance, prevBalance + 51);
   }
   function testETHWithdrawStoppedCypherDenies() public {}
   function testETHWithdrawStoppedProtocolApproves() public {}
@@ -111,7 +114,6 @@ contract CypherVaultTest is Test {
   function testERC20WithdrawStoppedProtocolApproves() public {}
   function testERC20WithdrawStoppedProtocolDenies() public {}
   // Multiple ERC20's
-  function testMultipleERC20WhaleApprovedPassthrough() public {}
   function testMultipleERC20WithdrawStoppedCypherApproves() public {}
   function testMultipleERC20WithdrawStoppedCypherDenies() public {}
   function testMultipleERC20WithdrawStoppedProtocolApproves() public {}
@@ -135,6 +137,8 @@ contract CypherVaultTest is Test {
 
     assertEq(token.balanceOf(whale), prevBalance + 51);
   }
+
+  function testWithdrawMultipleERC20IfWhitelisted() public {}
 
   function testWithdrawETHIfBelowThreshold() public {}
 
