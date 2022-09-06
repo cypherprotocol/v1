@@ -86,20 +86,26 @@ contract CypherVaultTest is Test {
     assertEq(patchedContract.balanceOf(bob, address(token)), 100);
   }
 
-  // user flows
-  // approved whale withdraws and everything works smoothly
-  // we approve tx
-  // protocol approves tx
-  // hacker withdraws ETH (WETH) and gets stopped
-  // we deny tx
-  // protocol denies tx
-  // hacker withdraws ERC20 and gets stopped
-  // we deny tx
-  // protocol denies tx
-  // hacker withdraws multiple ERC20's and gets stopped
-  // we deny tx
-  // protocol denies tx
+  /* HACKER FLOWS */
+  // ETH
+  function testETHWithdrawWhaleApprovedPassthrough() public {}
+  function testETHWithdrawStoppedCypherApproves() public {}
+  function testETHWithdrawStoppedCypherDenies() public {}
+  function testETHWithdrawStoppedProtocolApproves() public {}
+  function testETHWithdrawStoppedProtocolDenies() public {}
+  // ERC20
+  function testERC20WithdrawStoppedCypherApproves() public {}
+  function testERC20WithdrawStoppedCypherDenies() public {}
+  function testERC20WithdrawStoppedProtocolApproves() public {}
+  function testERC20WithdrawStoppedProtocolDenies() public {}
+  // Multiple ERC20's
+  function testMultipleERC20WhaleApprovedPassthrough() public {}
+  function testMultipleERC20WithdrawStoppedCypherApproves() public {}
+  function testMultipleERC20WithdrawStoppedCypherDenies() public {}
+  function testMultipleERC20WithdrawStoppedProtocolApproves() public {}
+  function testMultipleERC20WithdrawStoppedProtocolDenies() public {}
 
+  /* WHALE FLOWS */
   function testWithdrawETHIfWhitelisted() public {
     uint256 prevBalance = charlie.balance;
 
