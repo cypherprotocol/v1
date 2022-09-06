@@ -90,6 +90,7 @@ contract CypherVaultTest is Test {
   // ETH
 
   function testSetUpAttack() public {
+    startHoax(hacker, 100 ether);
     // check balance of DAO contract
     assertEq(token.balanceOf(address(vulnerableContract)), 100);
     attackContract = new Attack(payable(address(vulnerableContract)));
@@ -97,6 +98,7 @@ contract CypherVaultTest is Test {
     attackContract.attack{ value: 100 }(); // this fails, prob because we dont attach ether
     // assertEq(token.balanceOf(address(vulnerableContract)), 0);
     // assertEq(attackContract.getContractBalance(), 100);
+    vm.stopPrank();
   }
 
   function testETHWithdrawStoppedCypherApproves() public {
