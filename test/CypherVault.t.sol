@@ -161,9 +161,13 @@ contract CypherVaultTest is Test {
     function testEmitAmountStoppedEvent() public {}
   // CypherVault
     // gets the correct escrow
+    function testGetsCorrectEscrow() public {}
     // gets the correct delegator
+    function testGetsCorrectDelegator() public {}
     // sets the correct escrow
+    function testSetsCorrectEscrow() public {}
     // sets the correct delegator
+    function testSetsCorrectDelegator() public {}
   // CypherRegistry
     // creates the rate limiter with the correct variables
     // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
