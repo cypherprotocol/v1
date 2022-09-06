@@ -38,7 +38,8 @@ contract CypherVaultTest is Test {
     // Deposit ETH and ERC20 into non-Cypher, vulnerable contract
     startHoax(hacker, hacker);
     vulnerableContract = new DAOWallet();
-    vulnerableContract.deposit{ value: 100 }();
+    // vulnerableContract.deposit{ value: 100 }();
+    vulnerableContract.deposit{ value: 20 ether }();
     token.approve(address(vulnerableContract), 100);
     vulnerableContract.deposit(address(token), 100);
     vm.stopPrank();
@@ -88,15 +89,18 @@ contract CypherVaultTest is Test {
 
   /* HACKER FLOWS */
   // ETH
-
-  function testSetUpAttack() public {
-    startHoax(hacker, 100 ether);
+  function testSetUpAttackETH() public {
+    startHoax(hacker, 10 ether);
+    emit log_named_uint("hacker balance: ", hacker.balance);
     // check balance of DAO contract
-    assertEq(token.balanceOf(address(vulnerableContract)), 100);
+    // assertEq(vulnerableContract.getContractBalance(), 100);
+    assertEq(vulnerableContract.getContractBalance(), 20 ether);
+    emit log_named_uint("victim contract balance: ", vulnerableContract.getContractBalance());
     attackContract = new Attack(payable(address(vulnerableContract)));
+    emit log_named_address("test attack contract address: ", address(attackContract));
     // hacker calls attackContract.attack
-    attackContract.attack{ value: 100 }(); // this fails, prob because we dont attach ether
-    // assertEq(token.balanceOf(address(vulnerableContract)), 0);
+    attackContract.attack{ value: 1 ether }();
+    assertEq(vulnerableContract.getContractBalance(), 0);
     // assertEq(attackContract.getContractBalance(), 100);
     vm.stopPrank();
   }
