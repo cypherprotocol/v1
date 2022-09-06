@@ -17,24 +17,25 @@ contract CypherVaultTest is Test {
   CypherEscrow escrow;
   CypherRegistry registry;
 
-  address alice = address(0xBEEF);
-  address bob = address(0xDEAD);
-  address charlie = address(0x1337);
+  address hacker = address(0xBEEF);
+  address architect = address(0xDEAD);
+  address whale = address(0x1337);
+  address cypher = address(0x1111);
 
   MockERC20 token;
 
   function setUp() public {
     // Create new ERC20 and issue to all users
     token = new MockERC20();
-    token.mint(alice, 100);
-    token.mint(bob, 100);
-    token.mint(charlie, 100);
+    token.mint(hacker, 100);
+    token.mint(architect, 100);
+    token.mint(whale, 100);
 
     // Deploy the protocol to escrow registry
     registry = new CypherRegistry();
 
     // Deposit ETH and ERC20 into non-Cypher wallet
-    startHoax(alice, alice);
+    startHoax(hacker, hacker);
     vulnerableContract = new DAOWallet();
     vulnerableContract.deposit{ value: 100 }();
     token.approve(address(vulnerableContract), 100);
@@ -42,8 +43,8 @@ contract CypherVaultTest is Test {
     vm.stopPrank();
 
     // Deposit ETH and ERC20 into Cypher wallet
-    startHoax(bob, bob);
-    patchedContract = new SafeDAOWallet(bob, address(registry));
+    startHoax(architect, architect);
+    patchedContract = new SafeDAOWallet(architect, address(registry));
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
@@ -60,12 +61,12 @@ contract CypherVaultTest is Test {
     );
 
     address[] memory whales = new address[](1);
-    whales[0] = charlie;
+    whales[0] = whale;
 
     escrow.addToWhitelist(whales);
     vm.stopPrank();
 
-    startHoax(charlie, charlie);
+    startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
@@ -75,21 +76,32 @@ contract CypherVaultTest is Test {
   }
 
   function testMetadata() public {
-    assertEq(escrow.isWhitelisted(charlie), true);
+    assertEq(escrow.isWhitelisted(whale), true);
   }
 
   function testBalances() public {
-    assertEq(vulnerableContract.balanceOf(alice), 100);
-    assertEq(patchedContract.balanceOf(bob), 100);
+    assertEq(vulnerableContract.balanceOf(hacker), 100);
+    assertEq(patchedContract.balanceOf(architect), 100);
 
-    assertEq(vulnerableContract.balanceOf(alice, address(token)), 100);
-    assertEq(patchedContract.balanceOf(bob, address(token)), 100);
+    assertEq(vulnerableContract.balanceOf(hacker, address(token)), 100);
+    assertEq(patchedContract.balanceOf(architect, address(token)), 100);
   }
 
   /* HACKER FLOWS */
   // ETH
-  function testETHWithdrawWhaleApprovedPassthrough() public {}
-  function testETHWithdrawStoppedCypherApproves() public {}
+  function testETHWithdrawStoppedCypherApproves() public {
+    // hacker withdraws from patchContract
+
+    // gets stopped
+    // check to make sure he cannot withdraw on his own
+    // cypher team releases
+    uint256 prevBalance = architect.balance;
+
+    vm.prank(architect);
+    patchedContract.withdraw(51 wei);
+
+    assertEq(architect.balance, prevBalance + 51);
+  }
   function testETHWithdrawStoppedCypherDenies() public {}
   function testETHWithdrawStoppedProtocolApproves() public {}
   function testETHWithdrawStoppedProtocolDenies() public {}
@@ -107,21 +119,21 @@ contract CypherVaultTest is Test {
 
   /* WHALE FLOWS */
   function testWithdrawETHIfWhitelisted() public {
-    uint256 prevBalance = charlie.balance;
+    uint256 prevBalance = whale.balance;
 
-    vm.prank(charlie);
+    vm.prank(whale);
     patchedContract.withdraw(51 wei);
 
-    assertEq(charlie.balance, prevBalance + 51);
+    assertEq(whale.balance, prevBalance + 51);
   }
 
   function testWithdrawERC20IfWhitelisted() public {
-    uint256 prevBalance = token.balanceOf(charlie);
+    uint256 prevBalance = token.balanceOf(whale);
 
-    vm.prank(charlie);
+    vm.prank(whale);
     patchedContract.withdraw(address(token), 51);
 
-    assertEq(token.balanceOf(charlie), prevBalance + 51);
+    assertEq(token.balanceOf(whale), prevBalance + 51);
   }
 
   function testWithdrawETHIfBelowThreshold() public {}
@@ -173,4 +185,13 @@ contract CypherVaultTest is Test {
     function testSetsCorrectEscrowInformation() public {}
     // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
     function testCannotAnyoneButDelegatorDeployContract() public {}
+
+    /* FULL WALK THROUGH */
+    function testFullWalkThrough() public {}
+
+    /* UTILS  */
+    function userHacksWithReentrancy() public {
+        // run Attack on unsafe dao
+        // 
+    }
 }
