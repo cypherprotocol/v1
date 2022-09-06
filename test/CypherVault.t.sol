@@ -134,33 +134,32 @@ contract CypherVaultTest is Test {
 
   function testCannotHackerWithdrawERC20WithMultipleOracles() public {}
 
-  // contracts
+  /* CONTRACTS */
   // CypherEscrow
-  // sets token correctly
-  // sets chainId correctly
-  // sets tokenThreshold correctly
-  // sets timeLimit correctly
-  // sets owner correctly
-  // sets sourceContract correctly
-  // sets whitelist correct
+    function testCypherEscrowConstructorVariablesSetCorrectly() public {}
   // escrowTokens
-  // escrows the correct amount of tokens
-  // only allows calls from the source contract
-  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-  // stores correct Transaction information
-  // emits AmountStopped if stopped
+    // escrows the correct amount of tokens
+    function testEscrowsCorrectAmountOfTokens() public {}
+    // only allows calls from the source contract
+    function testOnlySourceContractModifier() public {}
+    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+    function testCannotNonSourceContractCallModifier() public {}
+    // stores correct Transaction information
+    function testStoresCorrectTransactionInformation() public {}
+    // emits AmountStopped if stopped
+    function testEmitAmountStoppedEvent() public {}
   // escrowETH
-  // escrows the correct amount of tokens
-  // only allows calls from the source contract
-  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-  // stores correct Transaction information
-  // emits AmountStopped if stopped
+    // escrows the correct amount of tokens
+    // only allows calls from the source contract
+    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+    // stores correct Transaction information
+    // emits AmountStopped if stopped
   // CypherVault
-  // gets the correct escrow
-  // gets the correct delegator
-  // sets the correct escrow
-  // sets the correct delegator
+    // gets the correct escrow
+    // gets the correct delegator
+    // sets the correct escrow
+    // sets the correct delegator
   // CypherRegistry
-  // creates the rate limiter with the correct variables
-  // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+    // creates the rate limiter with the correct variables
+    // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
 }
