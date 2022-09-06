@@ -150,10 +150,15 @@ contract CypherVaultTest is Test {
     function testEmitAmountStoppedEvent() public {}
   // escrowETH
     // escrows the correct amount of tokens
+    function testCorrectAmountOfETHEscrowed() public {}
     // only allows calls from the source contract
+    function testOnlySourceContractModifier() public {}
     // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+    function testCannotNonSourceContractCallModifier() public {}
     // stores correct Transaction information
+    function testStoresCorrectTransactionInformation() public {}
     // emits AmountStopped if stopped
+    function testEmitAmountStoppedEvent() public {}
   // CypherVault
     // gets the correct escrow
     // gets the correct delegator
