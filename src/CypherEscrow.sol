@@ -22,7 +22,7 @@ contract CypherEscrow is ReentrancyGuard {
   uint256 public timePeriod;
 
   /// @notice Whales that are whitelisted to withdraw without rate limiting
-  mapping(address => bool) public whitelist;
+  mapping(address => bool) public isWhitelisted;
   /// @notice Request info mapping
   mapping(address => Transaction) public tokenInfo;
 
@@ -70,19 +70,20 @@ contract CypherEscrow is ReentrancyGuard {
 
   /// @notice Check if an ETH withdraw is valid
   /// @param to The address to withdraw to
-  /// @param amount The amount to withdraw
   /// @param chainId_ The chain id of the token contract
   function escrowETH(
+    address from,
     address to,
-    uint256 amount,
     uint256 chainId_
-  ) external {
+  ) external payable {
     // check if the stop has been overwritten by protocol owner on the frontend
     require(msg.sender == sourceContract, "ONLY_SOURCE_CONTRACT");
     require(chainId == chainId_, "CHAIN_ID_MISMATCH");
 
+    uint256 amount = msg.value;
+
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
-    if (amount < tokenThreshold || whitelist[msg.sender] == true) {
+    if (amount < tokenThreshold || isWhitelisted[from] == true) {
       (bool success, ) = address(to).call{ value: amount }("");
       require(success, "TRANSFER_FAILED");
     } else if (tokenInfo[msg.sender].initialized == false) {
@@ -107,6 +108,7 @@ contract CypherEscrow is ReentrancyGuard {
   /// @param amount The amount to withdraw
   /// @param chainId_ The chain id of the token contract
   function escrowTokens(
+    address from,
     address to,
     address asset,
     uint256 amount,
@@ -117,7 +119,7 @@ contract CypherEscrow is ReentrancyGuard {
     require(chainId == chainId_, "CHAIN_ID_MISMATCH");
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
-    if (amount < tokenThreshold || whitelist[msg.sender] == true) {
+    if (amount < tokenThreshold || isWhitelisted[from] == true) {
       bool result = IERC20(asset).transferFrom(sourceContract, to, amount);
       require(result, "TRANSFER_FAILED");
     } else if (tokenInfo[msg.sender].initialized == false) {
@@ -193,7 +195,7 @@ contract CypherEscrow is ReentrancyGuard {
   /// @param to The address to add to the whitelist
   function addToWhitelist(address[] memory to) external onlyOracle {
     for (uint256 i = 0; i < to.length; i++) {
-      whitelist[to[i]] = true;
+      isWhitelisted[to[i]] = true;
     }
   }
 
