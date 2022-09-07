@@ -8,7 +8,6 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
-/// @notice Assumes the incoming asset is already wrapped from a token pool
 contract CypherEscrow is ReentrancyGuard {
   address public sourceContract;
 
@@ -42,6 +41,7 @@ contract CypherEscrow is ReentrancyGuard {
     uint256 amount,
     uint256 timestamp
   );
+  event OracleAdded(address newOracle, address oracleThatAdded);
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
@@ -203,5 +203,14 @@ contract CypherEscrow is ReentrancyGuard {
   /// @param to The address to approve to
   function approveWithdraw(address to) external onlyOracle {
     tokenInfo[to].approved = true;
+  }
+
+  /// @dev Add a new oracle
+  /// @param _oracle The address of the new oracle
+  /// @notice Can only come from a current oracle
+  function addOracle(address _oracle) external onlyOracle {
+    isOracle[_oracle] = true;
+
+    emit OracleAdded(_oracle, msg.sender);
   }
 }

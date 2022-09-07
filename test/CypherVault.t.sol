@@ -17,33 +17,36 @@ contract CypherVaultTest is Test {
   CypherEscrow escrow;
   CypherRegistry registry;
 
-  address alice = address(0xBEEF);
-  address bob = address(0xDEAD);
-  address charlie = address(0x1337);
+  address hacker = address(0xBEEF);
+  address architect = address(0xDEAD);
+  address whale = address(0x1337);
+  address cypher = address(0x1111);
 
   MockERC20 token;
 
   function setUp() public {
     // Create new ERC20 and issue to all users
     token = new MockERC20();
-    token.mint(alice, 100);
-    token.mint(bob, 100);
-    token.mint(charlie, 100);
+    token.mint(hacker, 100);
+    token.mint(architect, 100);
+    token.mint(whale, 100);
+    token.mint(cypher, 100);
 
     // Deploy the protocol to escrow registry
     registry = new CypherRegistry();
 
-    // Deposit ETH and ERC20 into non-Cypher wallet
-    startHoax(alice, alice);
+    // Deposit ETH and ERC20 into non-Cypher, vulnerable contract
+    startHoax(hacker, hacker);
     vulnerableContract = new DAOWallet();
-    vulnerableContract.deposit{ value: 100 }();
+    // vulnerableContract.deposit{ value: 100 }();
+    vulnerableContract.deposit{ value: 100 ether }();
     token.approve(address(vulnerableContract), 100);
     vulnerableContract.deposit(address(token), 100);
     vm.stopPrank();
 
-    // Deposit ETH and ERC20 into Cypher wallet
-    startHoax(bob, bob);
-    patchedContract = new SafeDAOWallet(bob, address(registry));
+    // Deposit ETH and ERC20 into contract protected by Cypher
+    startHoax(architect, architect);
+    patchedContract = new SafeDAOWallet(architect, address(registry));
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
@@ -60,69 +63,97 @@ contract CypherVaultTest is Test {
     );
 
     address[] memory whales = new address[](1);
-    whales[0] = charlie;
+    whales[0] = whale;
 
     escrow.addToWhitelist(whales);
     vm.stopPrank();
 
-    startHoax(charlie, charlie);
+    startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
     vm.stopPrank();
-
-    // attackContract = new Attack(payable(address(vulnerableContract)));
   }
 
   function testMetadata() public {
-    assertEq(escrow.isWhitelisted(charlie), true);
+    assertEq(escrow.isWhitelisted(whale), true);
   }
 
   function testBalances() public {
-    assertEq(vulnerableContract.balanceOf(alice), 100);
-    assertEq(patchedContract.balanceOf(bob), 100);
+    assertEq(vulnerableContract.balanceOf(hacker), 100 ether); // needs to be in ether for reentrancy
+    assertEq(patchedContract.balanceOf(architect), 100);
 
-    assertEq(vulnerableContract.balanceOf(alice, address(token)), 100);
-    assertEq(patchedContract.balanceOf(bob, address(token)), 100);
+    assertEq(vulnerableContract.balanceOf(hacker, address(token)), 100);
+    assertEq(patchedContract.balanceOf(architect, address(token)), 100);
   }
 
   /* HACKER FLOWS */
   // ETH
-  function testETHWithdrawWhaleApprovedPassthrough() public {}
-  function testETHWithdrawStoppedCypherApproves() public {}
+  function testSetUpAttackETH() public {
+    startHoax(hacker, 1 ether);
+
+    // check balance of DAO contract
+    assertEq(vulnerableContract.getContractBalance(), 100 ether);
+
+    attackContract = new Attack(payable(address(vulnerableContract)));
+    attackContract.attack{ value: 1 ether }();
+
+    assertEq(vulnerableContract.getContractBalance(), 0);
+    assertEq(hacker.balance, 101 ether);
+    vm.stopPrank();
+  }
+
+  function testETHWithdrawStoppedCypherApproves() public {
+    // hacker withdraws from patchContract
+    // gets stopped
+    // check to make sure he cannot withdraw on his own
+    // cypher team releases
+  }
+
   function testETHWithdrawStoppedCypherDenies() public {}
+
   function testETHWithdrawStoppedProtocolApproves() public {}
+
   function testETHWithdrawStoppedProtocolDenies() public {}
+
   // ERC20
   function testERC20WithdrawStoppedCypherApproves() public {}
+
   function testERC20WithdrawStoppedCypherDenies() public {}
+
   function testERC20WithdrawStoppedProtocolApproves() public {}
+
   function testERC20WithdrawStoppedProtocolDenies() public {}
+
   // Multiple ERC20's
-  function testMultipleERC20WhaleApprovedPassthrough() public {}
   function testMultipleERC20WithdrawStoppedCypherApproves() public {}
+
   function testMultipleERC20WithdrawStoppedCypherDenies() public {}
+
   function testMultipleERC20WithdrawStoppedProtocolApproves() public {}
+
   function testMultipleERC20WithdrawStoppedProtocolDenies() public {}
 
   /* WHALE FLOWS */
   function testWithdrawETHIfWhitelisted() public {
-    uint256 prevBalance = charlie.balance;
+    uint256 prevBalance = whale.balance;
 
-    vm.prank(charlie);
+    vm.prank(whale);
     patchedContract.withdraw(51 wei);
 
-    assertEq(charlie.balance, prevBalance + 51);
+    assertEq(whale.balance, prevBalance + 51);
   }
 
   function testWithdrawERC20IfWhitelisted() public {
-    uint256 prevBalance = token.balanceOf(charlie);
+    uint256 prevBalance = token.balanceOf(whale);
 
-    vm.prank(charlie);
+    vm.prank(whale);
     patchedContract.withdraw(address(token), 51);
 
-    assertEq(token.balanceOf(charlie), prevBalance + 51);
+    assertEq(token.balanceOf(whale), prevBalance + 51);
   }
+
+  function testWithdrawMultipleERC20IfWhitelisted() public {}
 
   function testWithdrawETHIfBelowThreshold() public {}
 
@@ -136,41 +167,66 @@ contract CypherVaultTest is Test {
 
   /* CONTRACTS */
   // CypherEscrow
-    function testCypherEscrowConstructorVariablesSetCorrectly() public {}
+  function testCypherEscrowConstructorVariablesSetCorrectly() public {}
+
   // escrowTokens
-    // escrows the correct amount of tokens
-    function testEscrowsCorrectAmountOfTokens() public {}
-    // only allows calls from the source contract
-    function testOnlySourceContractModifierERC20() public {}
-    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifierERC20() public {}
-    // stores correct Transaction information
-    function testStoresCorrectTransactionInformationERC20() public {}
-    // emits AmountStopped if stopped
-    function testEmitAmountStoppedEventERC20() public {}
+  // escrows the correct amount of tokens
+  function testEscrowsCorrectAmountOfTokens() public {}
+
+  // only allows calls from the source contract
+  function testOnlySourceContractModifierERC20() public {}
+
+  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  function testCannotNonSourceContractCallModifierERC20() public {}
+
+  // stores correct Transaction information
+  function testStoresCorrectTransactionInformationERC20() public {}
+
+  // emits AmountStopped if stopped
+  function testEmitAmountStoppedEventERC20() public {}
+
   // escrowETH
-    // escrows the correct amount of tokens
-    function testCorrectAmountOfETHEscrowed() public {}
-    // only allows calls from the source contract
-    function testOnlySourceContractModifierETH() public {}
-    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifierETH() public {}
-    // stores correct Transaction information
-    function testStoresCorrectTransactionInformationETH() public {}
-    // emits AmountStopped if stopped
-    function testEmitAmountStoppedEventETH() public {}
+  // escrows the correct amount of tokens
+  function testCorrectAmountOfETHEscrowed() public {}
+
+  // only allows calls from the source contract
+  function testOnlySourceContractModifierETH() public {}
+
+  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  function testCannotNonSourceContractCallModifierETH() public {}
+
+  // stores correct Transaction information
+  function testStoresCorrectTransactionInformationETH() public {}
+
+  // emits AmountStopped if stopped
+  function testEmitAmountStoppedEventETH() public {}
+
   // CypherVault
-    // gets the correct escrow
-    function testGetsCorrectEscrow() public {}
-    // gets the correct delegator
-    function testGetsCorrectDelegator() public {}
-    // sets the correct escrow
-    function testSetsCorrectEscrow() public {}
-    // sets the correct delegator
-    function testSetsCorrectDelegator() public {}
+  // gets the correct escrow
+  function testGetsCorrectEscrow() public {}
+
+  // gets the correct delegator
+  function testGetsCorrectDelegator() public {}
+
+  // sets the correct escrow
+  function testSetsCorrectEscrow() public {}
+
+  // sets the correct delegator
+  function testSetsCorrectDelegator() public {}
+
   // CypherRegistry
-    // creates the rate limiter with the correct variables
-    function testSetsCorrectEscrowInformation() public {}
-    // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
-    function testCannotAnyoneButDelegatorDeployContract() public {}
+  // creates the rate limiter with the correct variables
+  function testSetsCorrectEscrowInformation() public {}
+
+  // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+  function testCannotAnyoneButDelegatorDeployContract() public {}
+
+  /* FULL WALK THROUGH */
+  function testFullWalkThrough() public {}
+
+  /* UTILS  */
+  function userHacksWithReentrancy() public {
+    // run Attack on unsafe dao
+    //
+  }
 }
