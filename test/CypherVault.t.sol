@@ -91,8 +91,6 @@ contract CypherVaultTest is Test {
   // ETH
   function testSetUpAttackETH() public {
     startHoax(hacker, 1 ether);
-
-    // check balance of DAO contract
     assertEq(vulnerableContract.getContractBalance(), 100 ether);
 
     attackContract = new Attack(payable(address(vulnerableContract)));
@@ -104,10 +102,13 @@ contract CypherVaultTest is Test {
   }
 
   function testETHWithdrawStoppedCypherApproves() public {
+    startHoax(hacker, 1 ether);
+    assertEq(patchedContract.getContractBalance(), 100 ether);
     // hacker withdraws from patchContract
     // gets stopped
     // check to make sure he cannot withdraw on his own
     // cypher team releases
+    vm.stopPrank();
   }
 
   function testETHWithdrawStoppedCypherDenies() public {}
@@ -139,9 +140,9 @@ contract CypherVaultTest is Test {
     uint256 prevBalance = whale.balance;
 
     vm.prank(whale);
-    patchedContract.withdraw(51 wei);
+    patchedContract.withdrawETH();
 
-    assertEq(whale.balance, prevBalance + 51);
+    assertEq(whale.balance, prevBalance + 100);
   }
 
   function testWithdrawERC20IfWhitelisted() public {
