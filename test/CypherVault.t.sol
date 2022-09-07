@@ -90,20 +90,26 @@ contract CypherVaultTest is Test {
   /* HACKER FLOWS */
   // ETH
   function testSetUpAttackETH() public {
-    startHoax(hacker, 5 ether);
+    startHoax(hacker, 1 ether);
     emit log_named_address("hacker address", hacker);
     emit log_named_address("attack contract", address(attackContract));
 
     // check balance of DAO contract
     assertEq(vulnerableContract.getContractBalance(), 20 ether);
-    emit log_named_uint("victim contract balance: ", vulnerableContract.getContractBalance());
-    
+    emit log_named_uint(
+      "victim contract balance: ",
+      vulnerableContract.getContractBalance()
+    );
+
     attackContract = new Attack(payable(address(vulnerableContract)));
     emit log_string("---------------PRE HACK---------------");
     attackContract.attack{ value: 1 ether }();
     emit log_string("---------------POST HACK---------------");
     emit log_named_uint("hacker balance after hack: ", hacker.balance);
-    emit log_named_uint("attack contract balance after hack: ", address(attackContract).balance);
+    emit log_named_uint(
+      "attack contract balance after hack: ",
+      address(attackContract).balance
+    );
     assertEq(vulnerableContract.getContractBalance(), 0);
     // assertEq(attackContract.getContractBalance(), 100);
     vm.stopPrank();
@@ -115,18 +121,29 @@ contract CypherVaultTest is Test {
     // check to make sure he cannot withdraw on his own
     // cypher team releases
   }
+
   function testETHWithdrawStoppedCypherDenies() public {}
+
   function testETHWithdrawStoppedProtocolApproves() public {}
+
   function testETHWithdrawStoppedProtocolDenies() public {}
+
   // ERC20
   function testERC20WithdrawStoppedCypherApproves() public {}
+
   function testERC20WithdrawStoppedCypherDenies() public {}
+
   function testERC20WithdrawStoppedProtocolApproves() public {}
+
   function testERC20WithdrawStoppedProtocolDenies() public {}
+
   // Multiple ERC20's
   function testMultipleERC20WithdrawStoppedCypherApproves() public {}
+
   function testMultipleERC20WithdrawStoppedCypherDenies() public {}
+
   function testMultipleERC20WithdrawStoppedProtocolApproves() public {}
+
   function testMultipleERC20WithdrawStoppedProtocolDenies() public {}
 
   /* WHALE FLOWS */
@@ -162,50 +179,66 @@ contract CypherVaultTest is Test {
 
   /* CONTRACTS */
   // CypherEscrow
-    function testCypherEscrowConstructorVariablesSetCorrectly() public {}
+  function testCypherEscrowConstructorVariablesSetCorrectly() public {}
+
   // escrowTokens
-    // escrows the correct amount of tokens
-    function testEscrowsCorrectAmountOfTokens() public {}
-    // only allows calls from the source contract
-    function testOnlySourceContractModifierERC20() public {}
-    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifierERC20() public {}
-    // stores correct Transaction information
-    function testStoresCorrectTransactionInformationERC20() public {}
-    // emits AmountStopped if stopped
-    function testEmitAmountStoppedEventERC20() public {}
+  // escrows the correct amount of tokens
+  function testEscrowsCorrectAmountOfTokens() public {}
+
+  // only allows calls from the source contract
+  function testOnlySourceContractModifierERC20() public {}
+
+  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  function testCannotNonSourceContractCallModifierERC20() public {}
+
+  // stores correct Transaction information
+  function testStoresCorrectTransactionInformationERC20() public {}
+
+  // emits AmountStopped if stopped
+  function testEmitAmountStoppedEventERC20() public {}
+
   // escrowETH
-    // escrows the correct amount of tokens
-    function testCorrectAmountOfETHEscrowed() public {}
-    // only allows calls from the source contract
-    function testOnlySourceContractModifierETH() public {}
-    // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-    function testCannotNonSourceContractCallModifierETH() public {}
-    // stores correct Transaction information
-    function testStoresCorrectTransactionInformationETH() public {}
-    // emits AmountStopped if stopped
-    function testEmitAmountStoppedEventETH() public {}
+  // escrows the correct amount of tokens
+  function testCorrectAmountOfETHEscrowed() public {}
+
+  // only allows calls from the source contract
+  function testOnlySourceContractModifierETH() public {}
+
+  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  function testCannotNonSourceContractCallModifierETH() public {}
+
+  // stores correct Transaction information
+  function testStoresCorrectTransactionInformationETH() public {}
+
+  // emits AmountStopped if stopped
+  function testEmitAmountStoppedEventETH() public {}
+
   // CypherVault
-    // gets the correct escrow
-    function testGetsCorrectEscrow() public {}
-    // gets the correct delegator
-    function testGetsCorrectDelegator() public {}
-    // sets the correct escrow
-    function testSetsCorrectEscrow() public {}
-    // sets the correct delegator
-    function testSetsCorrectDelegator() public {}
+  // gets the correct escrow
+  function testGetsCorrectEscrow() public {}
+
+  // gets the correct delegator
+  function testGetsCorrectDelegator() public {}
+
+  // sets the correct escrow
+  function testSetsCorrectEscrow() public {}
+
+  // sets the correct delegator
+  function testSetsCorrectDelegator() public {}
+
   // CypherRegistry
-    // creates the rate limiter with the correct variables
-    function testSetsCorrectEscrowInformation() public {}
-    // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
-    function testCannotAnyoneButDelegatorDeployContract() public {}
+  // creates the rate limiter with the correct variables
+  function testSetsCorrectEscrowInformation() public {}
 
-    /* FULL WALK THROUGH */
-    function testFullWalkThrough() public {}
+  // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+  function testCannotAnyoneButDelegatorDeployContract() public {}
 
-    /* UTILS  */
-    function userHacksWithReentrancy() public {
-        // run Attack on unsafe dao
-        // 
-    }
+  /* FULL WALK THROUGH */
+  function testFullWalkThrough() public {}
+
+  /* UTILS  */
+  function userHacksWithReentrancy() public {
+    // run Attack on unsafe dao
+    //
+  }
 }
