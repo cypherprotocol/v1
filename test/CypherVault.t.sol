@@ -90,14 +90,17 @@ contract CypherVaultTest is Test {
   /* HACKER FLOWS */
   // ETH
   function testSetUpAttackETH() public {
-    startHoax(hacker, 10 ether);
-    emit log_named_uint("hacker balance: ", hacker.balance);
+    startHoax(hacker, 5 ether);
+    emit log_named_address("hacker address", hacker);
+    emit log_named_uint("hacker balance before hack: ", hacker.balance);
+    emit log_named_uint("test attack contract balance before hack: ", address(attackContract).balance);
     // check balance of DAO contract
     // assertEq(vulnerableContract.getContractBalance(), 100);
     assertEq(vulnerableContract.getContractBalance(), 20 ether);
     emit log_named_uint("victim contract balance: ", vulnerableContract.getContractBalance());
     attackContract = new Attack(payable(address(vulnerableContract)));
-    emit log_named_address("test attack contract address: ", address(attackContract));
+    emit log_named_uint("hacker balance after hack: ", hacker.balance);
+    emit log_named_uint("test attack contract balance after hack: ", address(attackContract).balance);
     // hacker calls attackContract.attack
     attackContract.attack{ value: 1 ether }();
     assertEq(vulnerableContract.getContractBalance(), 0);
