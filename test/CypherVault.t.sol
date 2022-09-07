@@ -39,7 +39,7 @@ contract CypherVaultTest is Test {
     startHoax(hacker, hacker);
     vulnerableContract = new DAOWallet();
     // vulnerableContract.deposit{ value: 100 }();
-    vulnerableContract.deposit{ value: 20 ether }();
+    vulnerableContract.deposit{ value: 100 ether }();
     token.approve(address(vulnerableContract), 100);
     vulnerableContract.deposit(address(token), 100);
     vm.stopPrank();
@@ -80,7 +80,7 @@ contract CypherVaultTest is Test {
   }
 
   function testBalances() public {
-    assertEq(vulnerableContract.balanceOf(hacker), 100);
+    assertEq(vulnerableContract.balanceOf(hacker), 100 ether); // needs to be in ether for reentrancy
     assertEq(patchedContract.balanceOf(architect), 100);
 
     assertEq(vulnerableContract.balanceOf(hacker, address(token)), 100);
@@ -91,27 +91,15 @@ contract CypherVaultTest is Test {
   // ETH
   function testSetUpAttackETH() public {
     startHoax(hacker, 1 ether);
-    emit log_named_address("hacker address", hacker);
-    emit log_named_address("attack contract", address(attackContract));
 
     // check balance of DAO contract
-    assertEq(vulnerableContract.getContractBalance(), 20 ether);
-    emit log_named_uint(
-      "victim contract balance: ",
-      vulnerableContract.getContractBalance()
-    );
+    assertEq(vulnerableContract.getContractBalance(), 100 ether);
 
     attackContract = new Attack(payable(address(vulnerableContract)));
-    emit log_string("---------------PRE HACK---------------");
     attackContract.attack{ value: 1 ether }();
-    emit log_string("---------------POST HACK---------------");
-    emit log_named_uint("hacker balance after hack: ", hacker.balance);
-    emit log_named_uint(
-      "attack contract balance after hack: ",
-      address(attackContract).balance
-    );
+
     assertEq(vulnerableContract.getContractBalance(), 0);
-    // assertEq(attackContract.getContractBalance(), 100);
+    assertEq(hacker.balance, 101 ether);
     vm.stopPrank();
   }
 
