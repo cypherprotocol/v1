@@ -114,7 +114,7 @@ contract CypherVaultTest is Test {
     // hacker withdraws from patchContract
     attackContract = new Attack(payable(address(patchedContract)));
     // gets stopped (hopefully)
-    vm.expectRevert(bytes("TRANSFER_FAILED"));
+    vm.expectRevert(abi.encodeWithSignature("TransferFailed()"));
     attackContract.attack{ value: 10 }();
     // check to make sure he cannot withdraw on his own
     assertEq(hacker.balance, 10);
@@ -139,6 +139,7 @@ contract CypherVaultTest is Test {
 
     // cypher team releases
     startHoax(cypher); // cypher EOA
+    escrow.approveWithdraw(newWhale);
     escrow.releaseTokens(newWhale, address(0x0));
     assertEq(newWhale.balance, 100);
   }

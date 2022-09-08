@@ -94,7 +94,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
-    } else if (tokenInfo[msg.sender].initialized == false) {
+    } else if (tokenInfo[to].initialized == false) {
       // if they havent been cached, add them to the cache
       // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
@@ -102,7 +102,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
       emit AmountStopped(to, address(0x0), amount, block.timestamp);
     } else {
       // check if they have been approved
-      if (tokenInfo[msg.sender].approved != true) revert NotApproved();
+      if (tokenInfo[to].approved != true) revert NotApproved();
 
       // if so, allow them to withdraw the full amount
       (bool success, ) = address(to).call{ value: amount }("");
@@ -130,7 +130,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
       bool result = IERC20(asset).transferFrom(sourceContract, to, amount);
       if (!result) revert TransferFailed();
-    } else if (tokenInfo[msg.sender].initialized == false) {
+    } else if (tokenInfo[to].initialized == false) {
       // if they havent been cached
       // add them to the cache
       addToLimiter(to, asset, amount, chainId_);
@@ -172,13 +172,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     onlyOracle
     nonReentrant
   {
-    if (tokenInfo[msg.sender].approved != true) revert NotApproved();
+    if (tokenInfo[to].approved != true) revert NotApproved();
     uint256 amount = tokenInfo[to].amount;
 
     tokenInfo[to].amount -= amount;
 
     if (tokenInfo[to].asset == address(0x0)) {
-      emit log_string("homeboy");
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
     } else {
