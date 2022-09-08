@@ -21,6 +21,7 @@ contract CypherVaultTest is Test {
   address architect = address(0xDEAD);
   address whale = address(0x1337);
   address cypher = address(0x1111);
+  address newWhale = address(0x9088);
 
   MockERC20 token;
 
@@ -51,6 +52,10 @@ contract CypherVaultTest is Test {
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
 
+    address[] memory oracles = new address[](2);
+    oracles[0] = architect;
+    oracles[1] = cypher;
+
     // Deploy escrow contract from designated architect
     escrow = CypherEscrow(
       registry.createEscrow(
@@ -58,7 +63,8 @@ contract CypherVaultTest is Test {
         1,
         address(token),
         50,
-        1 days
+        1 days,
+        oracles
       )
     );
 
@@ -91,8 +97,6 @@ contract CypherVaultTest is Test {
   // ETH
   function testSetUpAttackETH() public {
     startHoax(hacker, 1 ether);
-
-    // check balance of DAO contract
     assertEq(vulnerableContract.getContractBalance(), 100 ether);
 
     attackContract = new Attack(payable(address(vulnerableContract)));
@@ -103,11 +107,40 @@ contract CypherVaultTest is Test {
     vm.stopPrank();
   }
 
-  function testETHWithdrawStoppedCypherApproves() public {
+  function testETHWithdrawEscrowStopped() public {
+    // when pulling over threshold, it works. not less than
+    startHoax(hacker, 10);
+    assertEq(patchedContract.getContractBalance(), 200);
     // hacker withdraws from patchContract
-    // gets stopped
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped (hopefully)
+    vm.expectRevert(bytes("TRANSFER_FAILED"));
+    attackContract.attack{ value: 10 }();
     // check to make sure he cannot withdraw on his own
+    assertEq(hacker.balance, 10);
+    vm.stopPrank();
+  }
+
+  function testETHWithdrawNewWhaleStoppedCypherApproves() public {
+    // when pulling over threshold, it works. not less than
+    startHoax(newWhale, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // hacker withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped (hopefully)
+    // deposit and withdraw more than threshold
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(newWhale.balance, 35);
+    assertEq(escrow.getWalletBalance(newWhale), 65);
+    vm.stopPrank();
+
     // cypher team releases
+    startHoax(cypher); // cypher EOA
+    escrow.releaseTokens(newWhale, address(0x0));
+    assertEq(newWhale.balance, 100);
   }
 
   function testETHWithdrawStoppedCypherDenies() public {}
@@ -139,9 +172,9 @@ contract CypherVaultTest is Test {
     uint256 prevBalance = whale.balance;
 
     vm.prank(whale);
-    patchedContract.withdraw(51 wei);
+    patchedContract.withdrawETH();
 
-    assertEq(whale.balance, prevBalance + 51);
+    assertEq(whale.balance, prevBalance + 100);
   }
 
   function testWithdrawERC20IfWhitelisted() public {

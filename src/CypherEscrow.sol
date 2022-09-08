@@ -6,9 +6,11 @@ import { IWETH9 } from "./interfaces/IWETH9.sol";
 
 import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
+import "forge-std/Test.sol";
+
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
-contract CypherEscrow is ReentrancyGuard {
+contract CypherEscrow is ReentrancyGuard, Test {
   address public sourceContract;
 
   mapping(address => bool) isOracle;
@@ -45,7 +47,7 @@ contract CypherEscrow is ReentrancyGuard {
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
-    require(isAuthorized);
+    require(isAuthorized, "NOT_AUTHORIZED");
     _;
   }
 
@@ -75,7 +77,7 @@ contract CypherEscrow is ReentrancyGuard {
     address from,
     address to,
     uint256 chainId_
-  ) external payable {
+  ) external payable nonReentrant {
     // check if the stop has been overwritten by protocol owner on the frontend
     require(msg.sender == sourceContract, "ONLY_SOURCE_CONTRACT");
     require(chainId == chainId_, "CHAIN_ID_MISMATCH");
@@ -84,11 +86,13 @@ contract CypherEscrow is ReentrancyGuard {
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
+
       (bool success, ) = address(to).call{ value: amount }("");
       require(success, "TRANSFER_FAILED");
+
     } else if (tokenInfo[msg.sender].initialized == false) {
-      // if they havent been cached
-      // add them to the cache
+      // if they havent been cached, add them to the cache
+      // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
 
       emit AmountStopped(to, address(0x0), amount, block.timestamp);
@@ -170,6 +174,7 @@ contract CypherEscrow is ReentrancyGuard {
     tokenInfo[to].amount -= amount;
 
     if (tokenInfo[to].asset == address(0x0)) {
+      emit log_string("homeboy");
       (bool success, ) = address(to).call{ value: amount }("");
       require(success, "TRANSFER_FAILED");
     } else {
@@ -212,5 +217,12 @@ contract CypherEscrow is ReentrancyGuard {
     isOracle[_oracle] = true;
 
     emit OracleAdded(_oracle, msg.sender);
+  }
+
+  /// @dev Get wallet balance for specific wallet
+  /// @param wallet Wallet to query balance for
+  /// @return Token amount
+  function getWalletBalance(address wallet) external returns (uint) {
+    return tokenInfo[wallet].amount;
   }
 }
