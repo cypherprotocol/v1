@@ -5,6 +5,8 @@ import { CypherEscrow } from "./CypherEscrow.sol";
 import { ICypherProtocol } from "./interfaces/ICypherProtocol.sol";
 
 contract CypherRegistry {
+  event EscrowCreated(address indexed escrow, address indexed protocol);
+
   mapping(address => CypherEscrow) public getEscrowForProtocol;
 
   constructor() {}
@@ -33,6 +35,8 @@ contract CypherRegistry {
       oracles
     );
     getEscrowForProtocol[protocol] = escrow;
+
+    emit EscrowCreated(address(escrow), protocol);
 
     return address(escrow);
   }
