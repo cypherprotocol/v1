@@ -174,6 +174,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     tokenInfo[to].amount -= amount;
 
     if (tokenInfo[to].asset == address(0x0)) {
+      emit log_string("homeboy");
       (bool success, ) = address(to).call{ value: amount }("");
       require(success, "TRANSFER_FAILED");
     } else {
@@ -216,5 +217,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     isOracle[_oracle] = true;
 
     emit OracleAdded(_oracle, msg.sender);
+  }
+
+  /// @dev Get wallet balance for specific wallet
+  /// @param wallet Wallet to query balance for
+  /// @return Token amount
+  function getWalletBalance(address wallet) external returns (uint) {
+    return tokenInfo[wallet].amount;
   }
 }
