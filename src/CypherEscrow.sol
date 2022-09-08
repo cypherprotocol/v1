@@ -187,8 +187,6 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (tokenInfo[to].asset == address(0x0)) {
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
-
-      emit AmountSent(to, address(0x0), amount, block.timestamp);
     } else {
       // our contract needs approval to swap tokens
       bool result = IERC20(tokenContract).transferFrom(
@@ -197,11 +195,9 @@ contract CypherEscrow is ReentrancyGuard, Test {
         amount
       );
       if (!result) revert TransferFailed();
-
-      emit AmountSent(to, asset, amount, block.timestamp);
     }
 
-    emit AmountSent(to, amount, block.timestamp);
+    emit AmountSent(to, tokenContract, amount, block.timestamp);
   }
 
   /// @notice Set the timelimit for the tx before reverting
