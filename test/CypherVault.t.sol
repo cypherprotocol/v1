@@ -21,6 +21,7 @@ contract CypherVaultTest is Test {
   address architect = address(0xDEAD);
   address whale = address(0x1337);
   address cypher = address(0x1111);
+  address newWhale = address(0x9088);
 
   MockERC20 token;
 
@@ -51,8 +52,9 @@ contract CypherVaultTest is Test {
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
 
-    address[] memory oracles = new address[](1);
+    address[] memory oracles = new address[](2);
     oracles[0] = architect;
+    oracles[1] = cypher;
 
     // Deploy escrow contract from designated architect
     escrow = CypherEscrow(
@@ -105,7 +107,7 @@ contract CypherVaultTest is Test {
     vm.stopPrank();
   }
 
-  function testETHWithdrawStoppedCypherApproves() public {
+  function testETHWithdrawEscrowStopped() public {
     // when pulling over threshold, it works. not less than
     startHoax(hacker, 10);
     assertEq(patchedContract.getContractBalance(), 200);
@@ -116,8 +118,29 @@ contract CypherVaultTest is Test {
     attackContract.attack{ value: 10 }();
     // check to make sure he cannot withdraw on his own
     assertEq(hacker.balance, 10);
-    // cypher team releases
     vm.stopPrank();
+  }
+
+  function testETHWithdrawNewWhaleStoppedCypherApproves() public {
+    // when pulling over threshold, it works. not less than
+    startHoax(newWhale, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // hacker withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped (hopefully)
+    // deposit and withdraw more than threshold
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(newWhale.balance, 35);
+    assertEq(escrow.getWalletBalance(newWhale), 65);
+    vm.stopPrank();
+
+    // cypher team releases
+    startHoax(cypher); // cypher EOA
+    escrow.releaseTokens(newWhale, address(0x0));
+    assertEq(newWhale.balance, 100);
   }
 
   function testETHWithdrawStoppedCypherDenies() public {}
