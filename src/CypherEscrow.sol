@@ -42,7 +42,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     bool initialized;
   }
 
-  event AmountSent(address to, uint256 amount, uint256 timestamp);
+  event AmountSent(
+    address to,
+    address tokenContract,
+    uint256 amount,
+    uint256 timestamp
+  );
   event AmountStopped(
     address to,
     address tokenContract,
@@ -98,8 +103,6 @@ contract CypherEscrow is ReentrancyGuard, Test {
       // if they havent been cached, add them to the cache
       // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
-
-      emit AmountStopped(to, address(0x0), amount, block.timestamp);
     } else {
       // check if they have been approved
       if (tokenInfo[to].approved != true) revert NotApproved();
@@ -107,6 +110,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
       // if so, allow them to withdraw the full amount
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
+
+      emit AmountSent(to, address(0x0), amount, block.timestamp);
     }
   }
 
@@ -134,8 +139,6 @@ contract CypherEscrow is ReentrancyGuard, Test {
       // if they havent been cached
       // add them to the cache
       addToLimiter(to, asset, amount, chainId_);
-
-      emit AmountStopped(to, asset, amount, block.timestamp);
     } else {
       // check if they have been approved
       if (tokenInfo[msg.sender].approved != true) revert NotApproved();
@@ -143,6 +146,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
       // if so, allow them to withdraw the full amount
       bool result = IERC20(asset).transferFrom(asset, to, amount);
       if (!result) revert TransferFailed();
+
+      emit AmountSent(to, asset, amount, block.timestamp);
     }
   }
 
@@ -162,6 +167,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
     tokenInfo[_to].amount = _amount;
     tokenInfo[_to].approved = false;
     tokenInfo[_to].initialized = true;
+
+    emit AmountStopped(_to, _tokenContract, _amount, block.timestamp);
   }
 
   /// @notice Send approved funds to a user
@@ -180,6 +187,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (tokenInfo[to].asset == address(0x0)) {
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
+
+      emit AmountSent(to, address(0x0), amount, block.timestamp);
     } else {
       // our contract needs approval to swap tokens
       bool result = IERC20(tokenContract).transferFrom(
@@ -188,6 +197,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
         amount
       );
       if (!result) revert TransferFailed();
+
+      emit AmountSent(to, asset, amount, block.timestamp);
     }
 
     emit AmountSent(to, amount, block.timestamp);
