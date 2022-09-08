@@ -102,17 +102,16 @@ contract CypherVaultTest is Test {
   }
 
   function testETHWithdrawStoppedCypherApproves() public {
-    startHoax(hacker, 1 ether);
-    emit log_string("here");
-    assertEq(patchedContract.getContractBalance(), 200 ether);
-    emit log_string("here1");
+    // when pulling over threshold, it works. not less than
+    startHoax(hacker, 10);
+    assertEq(patchedContract.getContractBalance(), 200);
     // hacker withdraws from patchContract
     attackContract = new Attack(payable(address(patchedContract)));
-    emit log_string("here2");
     // gets stopped (hopefully)
-    attackContract.attack{ value: 1 ether }();
-    emit log_string("here3");
+    vm.expectRevert(bytes("TRANSFER_FAILED"));
+    attackContract.attack{ value: 10 }();
     // check to make sure he cannot withdraw on his own
+    assertEq(hacker.balance, 10);
     // cypher team releases
     vm.stopPrank();
   }
