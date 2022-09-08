@@ -45,7 +45,7 @@ contract CypherEscrow is ReentrancyGuard {
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
-    require(isAuthorized);
+    require(isAuthorized, "NOT_AUTHORIZED");
     _;
   }
 

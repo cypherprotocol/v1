@@ -5,7 +5,15 @@ import { CypherEscrow } from "./CypherEscrow.sol";
 import { ICypherProtocol } from "./interfaces/ICypherProtocol.sol";
 
 contract CypherRegistry {
-  event EscrowCreated(address indexed escrow, address indexed protocol);
+  event EscrowCreated(
+    address indexed escrow,
+    address indexed protocol,
+    uint256 chainId,
+    address token,
+    uint256 tokenThreshold,
+    uint256 timeLimit,
+    address[] oracles
+  );
 
   mapping(address => CypherEscrow) public getEscrowForProtocol;
 
@@ -21,11 +29,9 @@ contract CypherRegistry {
     uint256 chainId,
     address token,
     uint256 tokenThreshold,
-    uint256 timeLimit
+    uint256 timeLimit,
+    address[] memory oracles
   ) public architectOnly(protocol) returns (address) {
-    address[] memory oracles = new address[](1);
-    oracles[0] = msg.sender;
-
     CypherEscrow escrow = new CypherEscrow(
       protocol,
       chainId,
@@ -36,7 +42,15 @@ contract CypherRegistry {
     );
     getEscrowForProtocol[protocol] = escrow;
 
-    emit EscrowCreated(address(escrow), protocol);
+    emit EscrowCreated(
+      address(escrow),
+      protocol,
+      chainId,
+      token,
+      tokenThreshold,
+      timeLimit,
+      oracles
+    );
 
     return address(escrow);
   }

@@ -51,6 +51,9 @@ contract CypherVaultTest is Test {
     token.approve(address(patchedContract), 100);
     patchedContract.deposit(address(token), 100);
 
+    address[] memory oracles = new address[](1);
+    oracles[0] = architect;
+
     // Deploy escrow contract from designated architect
     escrow = CypherEscrow(
       registry.createEscrow(
@@ -58,7 +61,8 @@ contract CypherVaultTest is Test {
         1,
         address(token),
         50,
-        1 days
+        1 days,
+        oracles
       )
     );
 
