@@ -8,6 +8,12 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 import "forge-std/Test.sol";
 
+error NotOracle();
+error NotSourceContract();
+error NotApproved();
+error ChainIdMismatch();
+error TransferFailed();
+
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 contract CypherEscrow is ReentrancyGuard, Test {
@@ -36,7 +42,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     bool initialized;
   }
 
-  event AmountSent(address to, uint256 amount, uint256 timestamp);
+  event AmountSent(
+    address to,
+    address tokenContract,
+    uint256 amount,
+    uint256 timestamp
+  );
   event AmountStopped(
     address to,
     address tokenContract,
@@ -47,7 +58,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
-    require(isAuthorized, "NOT_AUTHORIZED");
+    if (!isAuthorized) revert NotOracle();
     _;
   }
 
@@ -79,30 +90,28 @@ contract CypherEscrow is ReentrancyGuard, Test {
     uint256 chainId_
   ) external payable nonReentrant {
     // check if the stop has been overwritten by protocol owner on the frontend
-    require(msg.sender == sourceContract, "ONLY_SOURCE_CONTRACT");
-    require(chainId == chainId_, "CHAIN_ID_MISMATCH");
+    if (msg.sender != sourceContract) revert NotSourceContract();
+    if (chainId != chainId_) revert ChainIdMismatch();
 
     uint256 amount = msg.value;
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
-
       (bool success, ) = address(to).call{ value: amount }("");
-      require(success, "TRANSFER_FAILED");
-
-    } else if (tokenInfo[msg.sender].initialized == false) {
+      if (!success) revert TransferFailed();
+    } else if (tokenInfo[to].initialized == false) {
       // if they havent been cached, add them to the cache
       // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
-
-      emit AmountStopped(to, address(0x0), amount, block.timestamp);
     } else {
       // check if they have been approved
-      require(tokenInfo[msg.sender].approved == true, "NOT_APPROVED");
+      if (tokenInfo[to].approved != true) revert NotApproved();
 
       // if so, allow them to withdraw the full amount
       (bool success, ) = address(to).call{ value: amount }("");
-      require(success, "TRANSFER_FAILED");
+      if (!success) revert TransferFailed();
+
+      emit AmountSent(to, address(0x0), amount, block.timestamp);
     }
   }
 
@@ -119,26 +128,26 @@ contract CypherEscrow is ReentrancyGuard, Test {
     uint256 chainId_
   ) external {
     // check if the stop has been overwritten by protocol owner on the frontend
-    require(msg.sender == sourceContract, "ONLY_SOURCE_CONTRACT");
-    require(chainId == chainId_, "CHAIN_ID_MISMATCH");
+    if (msg.sender != sourceContract) revert NotSourceContract();
+    if (chainId != chainId_) revert ChainIdMismatch();
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
       bool result = IERC20(asset).transferFrom(sourceContract, to, amount);
-      require(result, "TRANSFER_FAILED");
-    } else if (tokenInfo[msg.sender].initialized == false) {
+      if (!result) revert TransferFailed();
+    } else if (tokenInfo[to].initialized == false) {
       // if they havent been cached
       // add them to the cache
       addToLimiter(to, asset, amount, chainId_);
-
-      emit AmountStopped(to, asset, amount, block.timestamp);
     } else {
       // check if they have been approved
-      require(tokenInfo[msg.sender].approved == true, "NOT_APPROVED");
+      if (tokenInfo[msg.sender].approved != true) revert NotApproved();
 
       // if so, allow them to withdraw the full amount
       bool result = IERC20(asset).transferFrom(asset, to, amount);
-      require(result, "TRANSFER_FAILED");
+      if (!result) revert TransferFailed();
+
+      emit AmountSent(to, asset, amount, block.timestamp);
     }
   }
 
@@ -158,6 +167,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
     tokenInfo[_to].amount = _amount;
     tokenInfo[_to].approved = false;
     tokenInfo[_to].initialized = true;
+
+    emit AmountStopped(_to, _tokenContract, _amount, block.timestamp);
   }
 
   /// @notice Send approved funds to a user
@@ -168,15 +179,14 @@ contract CypherEscrow is ReentrancyGuard, Test {
     onlyOracle
     nonReentrant
   {
-    require(tokenInfo[to].approved = true, "NOT_APPROVED");
+    if (tokenInfo[to].approved != true) revert NotApproved();
     uint256 amount = tokenInfo[to].amount;
 
     tokenInfo[to].amount -= amount;
 
     if (tokenInfo[to].asset == address(0x0)) {
-      emit log_string("homeboy");
       (bool success, ) = address(to).call{ value: amount }("");
-      require(success, "TRANSFER_FAILED");
+      if (!success) revert TransferFailed();
     } else {
       // our contract needs approval to swap tokens
       bool result = IERC20(tokenContract).transferFrom(
@@ -184,10 +194,10 @@ contract CypherEscrow is ReentrancyGuard, Test {
         to,
         amount
       );
-      require(result == true, "TRANSFER_FAILED");
+      if (!result) revert TransferFailed();
     }
 
-    emit AmountSent(to, amount, block.timestamp);
+    emit AmountSent(to, tokenContract, amount, block.timestamp);
   }
 
   /// @notice Set the timelimit for the tx before reverting
@@ -222,7 +232,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
   /// @dev Get wallet balance for specific wallet
   /// @param wallet Wallet to query balance for
   /// @return Token amount
-  function getWalletBalance(address wallet) external returns (uint) {
+  function getWalletBalance(address wallet) external returns (uint256) {
     return tokenInfo[wallet].amount;
   }
 }
