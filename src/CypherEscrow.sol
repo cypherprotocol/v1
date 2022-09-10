@@ -94,6 +94,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (msg.sender != sourceContract) revert NotSourceContract();
     if (chainId != chainId_) revert ChainIdMismatch();
 
+    Transaction memory txInfo = tokenInfo[to];
+
     uint256 amount = msg.value;
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
@@ -101,13 +103,13 @@ contract CypherEscrow is ReentrancyGuard, Test {
       (bool success, ) = address(to).call{ value: amount }("");
 
       if (!success) revert TransferFailed();
-    } else if (tokenInfo[to].initialized == false) {
+    } else if (txInfo.initialized == false) {
       // if they havent been cached, add them to the cache
       // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
     } else {
       // check if they have been approved
-      if (tokenInfo[to].approved != true) revert NotApproved();
+      if (txInfo.approved != true) revert NotApproved();
 
       // if so, allow them to withdraw the full amount
       (bool success, ) = address(to).call{ value: amount }("");
@@ -181,12 +183,14 @@ contract CypherEscrow is ReentrancyGuard, Test {
     onlyOracle
     nonReentrant
   {
-    if (tokenInfo[to].approved != true) revert NotApproved();
-    uint256 amount = tokenInfo[to].amount;
+    Transaction memory txInfo = tokenInfo[to];
 
-    tokenInfo[to].amount -= amount;
+    if (txInfo.approved != true) revert NotApproved();
+    uint256 amount = txInfo.amount;
 
-    if (tokenInfo[to].asset == address(0x0)) {
+    txInfo.amount -= amount;
+
+    if (txInfo.asset == address(0x0)) {
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
     } else {
