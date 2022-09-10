@@ -8,6 +8,12 @@ import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 import "forge-std/Test.sol";
 
+error TransferFailed();
+error OnlySourceContract();
+error NotApproved();
+error ChainIdMismatch();
+error NotOracle();
+
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 contract CypherEscrow is ReentrancyGuard, Test {
@@ -21,7 +27,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
   uint256 public tokenThreshold;
   uint256 public timeLimit;
   uint256 public timePeriod;
-
+ 
   /// @notice Whales that are whitelisted to withdraw without rate limiting
   mapping(address => bool) public isWhitelisted;
   /// @notice Request info mapping
@@ -47,7 +53,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
-    require(isAuthorized, "NOT_AUTHORIZED");
+    if(!isAuthorized) revert NotOracle();
     _;
   }
 
@@ -88,7 +94,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
 
       (bool success, ) = address(to).call{ value: amount }("");
-      require(success, "TRANSFER_FAILED");
+      if(!success) revert TransferFailed();
 
     } else if (tokenInfo[msg.sender].initialized == false) {
       // if they havent been cached, add them to the cache
