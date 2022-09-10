@@ -125,10 +125,9 @@ contract CypherVaultTest is Test {
     // when pulling over threshold, it works. not less than
     startHoax(newWhale, 100);
     assertEq(patchedContract.getContractBalance(), 200);
-    // hacker withdraws from patchContract
+    // whale withdraws from patchContract
     attackContract = new Attack(payable(address(patchedContract)));
-    // gets stopped (hopefully)
-    // deposit and withdraw more than threshold
+    // gets stopped, deposit and withdraw more than threshold
     patchedContract.deposit{ value: 65 }();
     patchedContract.withdrawETH();
 
@@ -144,7 +143,26 @@ contract CypherVaultTest is Test {
     assertEq(newWhale.balance, 100);
   }
 
-  function testETHWithdrawStoppedCypherDenies() public {}
+  function testETHWithdrawStoppedCypherDenies() public {
+    startHoax(hacker, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // hacker withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped, deposit and withdraw more than threshold
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(hacker.balance, 35);
+    assertEq(escrow.getWalletBalance(hacker), 65);
+    vm.stopPrank();
+
+    // cypher team denies
+    startHoax(cypher); // cypher EOA
+    // escrow.approveWithdraw(hacker);
+    escrow.denyTransaction(hacker);
+    assertEq(hacker.balance, 100);
+  }
 
   function testETHWithdrawStoppedProtocolApproves() public {}
 
@@ -253,14 +271,7 @@ contract CypherVaultTest is Test {
   function testSetsCorrectEscrowInformation() public {}
 
   // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
-  function testCannotAnyoneButDelegatorDeployContract() public {}
+  function testCannotAnyoneButDelegatorDeployContract() public {
 
-  /* FULL WALK THROUGH */
-  function testFullWalkThrough() public {}
-
-  /* UTILS  */
-  function userHacksWithReentrancy() public {
-    // run Attack on unsafe dao
-    //
   }
 }
