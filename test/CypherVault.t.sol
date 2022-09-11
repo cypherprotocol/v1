@@ -9,6 +9,7 @@ import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
+import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
   Attack attackContract;
@@ -149,6 +150,7 @@ contract CypherVaultTest is Test {
     // hacker withdraws from patchContract
     attackContract = new Attack(payable(address(patchedContract)));
     // gets stopped, deposit and withdraw more than threshold
+    // TODO: make this a hack, not deposit
     patchedContract.deposit{ value: 65 }();
     patchedContract.withdrawETH();
 
@@ -159,8 +161,16 @@ contract CypherVaultTest is Test {
 
     // cypher team denies
     startHoax(cypher); // cypher EOA
-    // escrow.approveWithdraw(hacker);
+
+    bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusBefore, false);
+    escrow.disapproveWithdraw(hacker);
+    bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusAfter, false);
+
     escrow.denyTransaction(hacker);
+    // protocol balance should get the funds back + hacker deposited funds
+    assertEq(patchedContract.getContractBalance(), 265);
     assertEq(hacker.balance, 100);
   }
 
