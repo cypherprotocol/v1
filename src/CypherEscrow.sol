@@ -7,11 +7,12 @@ import { IWETH9 } from "./interfaces/IWETH9.sol";
 import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 import "forge-std/Test.sol";
+import { Bool } from "../test/lib/BoolTool.sol";
 
 error NotOracle();
 error NotSourceContract();
 error NotApproved();
-error CannotBeApproved();
+error MustBeDisapproved();
 error ChainIdMismatch();
 error TransferFailed();
 
@@ -211,7 +212,11 @@ contract CypherEscrow is ReentrancyGuard, Test {
   function denyTransaction(address to) external onlyOracle nonReentrant {
     Transaction memory txInfo = tokenInfo[to];
 
-    if (txInfo.approved = true) revert CannotBeApproved();
+    emit log_named_uint("approved?", Bool.toUint256(tokenInfo[to].approved));
+
+    // need the to to be disapproved
+    // if (txInfo.approved = true) revert MustBeDisapproved();
+
     // Send funds back
     if (txInfo.asset == address(0x0)) {
       (bool success, ) = address(sourceContract).call{ value: txInfo.amount }("");
@@ -248,6 +253,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     tokenInfo[to].approved = true;
   }
 
+  /// @notice Disapprove a withdraw to a user
+  /// @param to The address to disapprove
+  function disapproveWithdraw(address to) external onlyOracle {
+    tokenInfo[to].approved = false;
+  }
+
   /// @dev Add a new oracle
   /// @param _oracle The address of the new oracle
   /// @notice Can only come from a current oracle
@@ -258,9 +269,16 @@ contract CypherEscrow is ReentrancyGuard, Test {
   }
 
   /// @dev Get wallet balance for specific wallet
-  /// @param wallet Wallet to query balance for
+  /// @param to Wallet to query balance for
   /// @return Token amount
-  function getWalletBalance(address wallet) external returns (uint256) {
-    return tokenInfo[wallet].amount;
+  function getWalletBalance(address to) external returns (uint256) {
+    return tokenInfo[to].amount;
+  }
+
+  /// @dev Get approval status for specific wallet
+  /// @param to Wallet to query approval for
+  /// @return Token amount
+  function getApprovalStatus(address to) external returns (bool) {
+    return tokenInfo[to].approved;
   }
 }
