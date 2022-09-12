@@ -9,6 +9,7 @@ import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
+import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
   Attack attackContract;
@@ -125,10 +126,9 @@ contract CypherVaultTest is Test {
     // when pulling over threshold, it works. not less than
     startHoax(newWhale, 100);
     assertEq(patchedContract.getContractBalance(), 200);
-    // hacker withdraws from patchContract
+    // whale withdraws from patchContract
     attackContract = new Attack(payable(address(patchedContract)));
-    // gets stopped (hopefully)
-    // deposit and withdraw more than threshold
+    // gets stopped, deposit and withdraw more than threshold
     patchedContract.deposit{ value: 65 }();
     patchedContract.withdrawETH();
 
@@ -144,7 +144,35 @@ contract CypherVaultTest is Test {
     assertEq(newWhale.balance, 100);
   }
 
-  function testETHWithdrawStoppedCypherDenies() public {}
+  function testETHWithdrawStoppedCypherDenies() public {
+    startHoax(hacker, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // hacker withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped, deposit and withdraw more than threshold
+    // TODO: make this a hack, not deposit
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(hacker.balance, 35);
+    assertEq(escrow.getWalletBalance(hacker), 65);
+    vm.stopPrank();
+
+    // cypher team denies
+    startHoax(cypher); // cypher EOA
+
+    bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusBefore, false);
+    escrow.disapproveWithdraw(hacker);
+    bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusAfter, false);
+
+    escrow.denyTransaction(hacker);
+    // protocol balance should get the funds back + hacker deposited funds
+    assertEq(patchedContract.getContractBalance(), 265);
+    assertEq(hacker.balance, 35);
+  }
 
   function testETHWithdrawStoppedProtocolApproves() public {}
 
@@ -254,13 +282,4 @@ contract CypherVaultTest is Test {
 
   // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
   function testCannotAnyoneButDelegatorDeployContract() public {}
-
-  /* FULL WALK THROUGH */
-  function testFullWalkThrough() public {}
-
-  /* UTILS  */
-  function userHacksWithReentrancy() public {
-    // run Attack on unsafe dao
-    //
-  }
 }

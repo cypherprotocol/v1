@@ -7,10 +7,12 @@ import { IWETH9 } from "./interfaces/IWETH9.sol";
 import { ReentrancyGuard } from "solmate/utils/ReentrancyGuard.sol";
 
 import "forge-std/Test.sol";
+import { Bool } from "../test/lib/BoolTool.sol";
 
 error NotOracle();
 error NotSourceContract();
 error NotApproved();
+error MustBeDisapproved();
 error ChainIdMismatch();
 error TransferFailed();
 
@@ -58,7 +60,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
-    if (!isAuthorized) revert NotOracle();
+    if(!isAuthorized) revert NotOracle();
     _;
   }
 
@@ -93,19 +95,22 @@ contract CypherEscrow is ReentrancyGuard, Test {
     if (msg.sender != sourceContract) revert NotSourceContract();
     if (chainId != chainId_) revert ChainIdMismatch();
 
+    Transaction memory txInfo = tokenInfo[to];
+
     uint256 amount = msg.value;
 
     // if they are whitelisted or amount is less than threshold, just transfer the tokens
     if (amount < tokenThreshold || isWhitelisted[from] == true) {
       (bool success, ) = address(to).call{ value: amount }("");
+
       if (!success) revert TransferFailed();
-    } else if (tokenInfo[to].initialized == false) {
+    } else if (txInfo.initialized == false) {
       // if they havent been cached, add them to the cache
       // addToLimiter(to, sourceContract, amount, chainId_);
       addToLimiter(to, address(0x0), amount, chainId_);
     } else {
       // check if they have been approved
-      if (tokenInfo[to].approved != true) revert NotApproved();
+      if (txInfo.approved != true) revert NotApproved();
 
       // if so, allow them to withdraw the full amount
       (bool success, ) = address(to).call{ value: amount }("");
@@ -179,16 +184,18 @@ contract CypherEscrow is ReentrancyGuard, Test {
     onlyOracle
     nonReentrant
   {
-    if (tokenInfo[to].approved != true) revert NotApproved();
-    uint256 amount = tokenInfo[to].amount;
+    Transaction memory txInfo = tokenInfo[to];
 
-    tokenInfo[to].amount -= amount;
+    if (txInfo.approved != true) revert NotApproved();
+    uint256 amount = txInfo.amount;
 
-    if (tokenInfo[to].asset == address(0x0)) {
+    txInfo.amount -= amount;
+
+    if (txInfo.asset == address(0x0)) {
       (bool success, ) = address(to).call{ value: amount }("");
       if (!success) revert TransferFailed();
     } else {
-      // our contract needs approval to swap tokens
+      /// @notice Our contract needs approval to swap tokens
       bool result = IERC20(tokenContract).transferFrom(
         tokenContract,
         to,
@@ -198,6 +205,30 @@ contract CypherEscrow is ReentrancyGuard, Test {
     }
 
     emit AmountSent(to, tokenContract, amount, block.timestamp);
+  }
+
+  /// @notice Sends the funds back to the protocol- needs to be after they have fixed the exploit
+  /// @param to the funds back to the protocol- needs to be after they have fixed the exploit
+  function denyTransaction(address to) external onlyOracle nonReentrant {
+    Transaction memory txInfo = tokenInfo[to];
+
+    // need the to to be disapproved
+    if (txInfo.approved == true) revert MustBeDisapproved();
+
+    // Send funds back
+    if (txInfo.asset == address(0x0)) {
+      (bool success, ) = address(sourceContract).call{ value: txInfo.amount }("");
+      if (!success) revert TransferFailed();
+    } else {
+      /// TODO: this could be a potential exploit
+      address token = txInfo.asset;
+      /// @notice Our contract needs approval to swap tokens
+      bool result = IERC20(token).transferFrom(
+        to,
+        token,
+        txInfo.amount
+      );
+    }
   }
 
   /// @notice Set the timelimit for the tx before reverting
@@ -220,6 +251,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     tokenInfo[to].approved = true;
   }
 
+  /// @notice Disapprove a withdraw to a user
+  /// @param to The address to disapprove
+  function disapproveWithdraw(address to) external onlyOracle {
+    tokenInfo[to].approved = false;
+  }
+
   /// @dev Add a new oracle
   /// @param _oracle The address of the new oracle
   /// @notice Can only come from a current oracle
@@ -230,9 +267,16 @@ contract CypherEscrow is ReentrancyGuard, Test {
   }
 
   /// @dev Get wallet balance for specific wallet
-  /// @param wallet Wallet to query balance for
+  /// @param to Wallet to query balance for
   /// @return Token amount
-  function getWalletBalance(address wallet) external returns (uint256) {
-    return tokenInfo[wallet].amount;
+  function getWalletBalance(address to) external returns (uint256) {
+    return tokenInfo[to].amount;
+  }
+
+  /// @dev Get approval status for specific wallet
+  /// @param to Wallet to query approval for
+  /// @return Token amount
+  function getApprovalStatus(address to) external returns (bool) {
+    return tokenInfo[to].approved;
   }
 }
