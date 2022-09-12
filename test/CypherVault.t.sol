@@ -172,9 +172,38 @@ contract CypherVaultTest is Test {
     // protocol balance should get the funds back + hacker deposited funds
     assertEq(patchedContract.getContractBalance(), 265);
     assertEq(hacker.balance, 35);
+    vm.stopPrank();
   }
 
-  function testETHWithdrawStoppedProtocolApproves() public {}
+  function testETHWithdrawStoppedProtocolApproves() public {
+    startHoax(hacker, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // hacker withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped, deposit and withdraw more than threshold
+    // TODO: make this a hack, not deposit
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(hacker.balance, 35);
+    assertEq(escrow.getWalletBalance(hacker), 65);
+    vm.stopPrank();
+
+    // protocol approves
+    startHoax(architect);
+    bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusBefore, false);
+    escrow.disapproveWithdraw(hacker);
+    bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
+    assertEq(approvalStatusAfter, false);
+
+    escrow.denyTransaction(hacker);
+    // protocol balance should get the funds back + hacker deposited funds
+    assertEq(patchedContract.getContractBalance(), 265);
+    assertEq(hacker.balance, 35);
+    vm.stopPrank();
+  }
 
   function testETHWithdrawStoppedProtocolDenies() public {}
 
