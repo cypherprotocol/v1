@@ -215,7 +215,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     emit log_named_uint("approved?", Bool.toUint256(tokenInfo[to].approved));
 
     // need the to to be disapproved
-    // if (txInfo.approved = true) revert MustBeDisapproved();
+    if (txInfo.approved = true) revert MustBeDisapproved();
 
     // Send funds back
     if (txInfo.asset == address(0x0)) {
