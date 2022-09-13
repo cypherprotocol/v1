@@ -176,6 +176,28 @@ contract CypherVaultTest is Test {
   }
 
   function testETHWithdrawStoppedProtocolApproves() public {
+    startHoax(newWhale, 100);
+    assertEq(patchedContract.getContractBalance(), 200);
+    // newWhale withdraws from patchContract
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped, deposit and withdraw more than threshold
+    // TODO: make this a hack, not deposit
+    patchedContract.deposit{ value: 65 }();
+    patchedContract.withdrawETH();
+
+    // check to make sure he cannot withdraw on his own
+    assertEq(newWhale.balance, 35);
+    assertEq(escrow.getWalletBalance(newWhale), 65);
+    vm.stopPrank();
+
+    // architect approves
+    startHoax(architect); // cypher EOA
+    escrow.approveWithdraw(newWhale);
+    escrow.releaseTokens(newWhale, address(0x0));
+    assertEq(newWhale.balance, 100);
+  }
+
+  function testETHWithdrawStoppedProtocolDenies() public {
     startHoax(hacker, 100);
     assertEq(patchedContract.getContractBalance(), 200);
     // hacker withdraws from patchContract
@@ -204,8 +226,6 @@ contract CypherVaultTest is Test {
     assertEq(hacker.balance, 35);
     vm.stopPrank();
   }
-
-  function testETHWithdrawStoppedProtocolDenies() public {}
 
   // ERC20
   function testERC20WithdrawStoppedCypherApproves() public {}
