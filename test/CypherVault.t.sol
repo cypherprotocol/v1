@@ -51,7 +51,7 @@ contract CypherVaultTest is Test {
     patchedContract = new SafeDAOWallet(architect, address(registry));
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.deposit(address(token), 100);
+    patchedContract.depositTokens(address(token), 100);
 
     address[] memory oracles = new address[](2);
     oracles[0] = architect;
@@ -78,7 +78,7 @@ contract CypherVaultTest is Test {
     startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.deposit(address(token), 100);
+    patchedContract.depositTokens(address(token), 100);
     vm.stopPrank();
   }
 
@@ -228,7 +228,28 @@ contract CypherVaultTest is Test {
   }
 
   // ERC20
-  function testERC20WithdrawStoppedCypherApproves() public {}
+  function testSetUpAttackERC20() public {
+    startHoax(hacker, 1 ether);
+    assertEq(vulnerableContract.getContractBalance(), 100 ether);
+
+    attackContract = new Attack(payable(address(vulnerableContract)));
+    attackContract.attack{ value: 1 ether }();
+
+    assertEq(vulnerableContract.getContractBalance(), 0);
+    assertEq(hacker.balance, 101 ether);
+    vm.stopPrank();
+  }
+
+  function testERC20WithdrawStoppedCypherApproves() public {
+    // get hacker balance
+    token.mint(hacker, 100); // not going out of scope for erc20
+    assertEq(token.balanceOf(hacker), 100);
+
+    attackContract = new Attack(payable(address(patchedContract)));
+    // gets stopped, deposit and withdraw more than threshold
+    patchedContract.depositTokens(address(token), 60);
+    patchedContract.withdraw(address(token), 60);
+  }
 
   function testERC20WithdrawStoppedCypherDenies() public {}
 
