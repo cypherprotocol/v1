@@ -14,6 +14,7 @@ import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
   Attack attackContract;
+  AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
   CypherEscrow escrow;
@@ -232,8 +233,8 @@ contract CypherVaultTest is Test {
     startHoax(hacker);
     assertEq(token.balanceOf(address(vulnerableContract)), 100);
 
-    attackContract = new Attack(payable(address(vulnerableContract)));
-    // attackContract.attack(); // overflows
+    attackTokenContract = new AttackToken(payable(address(vulnerableContract)), address(token));
+    attackTokenContract.attack(10); // overflows
 
     // assertEq(vulnerableContract.getContractBalance(), 0);
     // assertEq(hacker.balance, 101 ether);
