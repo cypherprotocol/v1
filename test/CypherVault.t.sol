@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import { CypherEscrow } from "../src/CypherEscrow.sol";
 import { Attack } from "./exploit/Attack.sol";
+import { AttackToken } from "./exploit/Attacktoken.sol";
 import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
@@ -94,8 +95,7 @@ contract CypherVaultTest is Test {
     assertEq(patchedContract.balanceOf(architect, address(token)), 100);
   }
 
-  /* HACKER FLOWS */
-  // ETH
+  //////////////////////////// ETH ////////////////////////////
   function testSetUpAttackETH() public {
     startHoax(hacker, 1 ether);
     assertEq(vulnerableContract.getContractBalance(), 100 ether);
@@ -227,7 +227,7 @@ contract CypherVaultTest is Test {
     vm.stopPrank();
   }
 
-  // ERC20
+  //////////////////////////// ERC20 ////////////////////////////
   function testSetUpAttackERC20() public {
     startHoax(hacker);
     assertEq(token.balanceOf(address(vulnerableContract)), 100);
