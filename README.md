@@ -4,19 +4,13 @@
 
 A **Clean**, **Robust** Template for Foundry Projects.
 
-## Getting Started
+## Checklist
 
-Click [`use this template`](https://github.com/abigger87/femplate/generate) to create a new repository with this repo as the initial state.
+Ensure you completed **all of the steps** below before submitting your pull request:
 
-Or, if your repo already exists, run:
-
-```sh
-forge init --template https://github.com/abigger87/femplate
-git submodule update --init --recursive
-forge install
-```
-
-Run `./utils/rename.sh` to rename all instances of `femplate` with the name of your project/repository.
+- [ ] Ran `forge snapshot`?
+- [ ] Ran `npm run lint`?
+- [ ] Ran `forge test`?
 
 ## Blueprint
 
