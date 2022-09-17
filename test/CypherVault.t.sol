@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import { CypherEscrow } from "../src/CypherEscrow.sol";
 import { Attack } from "./exploit/Attack.sol";
+import { AttackToken } from "./exploit/ERC20/Attacktoken.sol";
 import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
@@ -13,6 +14,7 @@ import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
   Attack attackContract;
+  AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
   CypherEscrow escrow;
@@ -51,7 +53,7 @@ contract CypherVaultTest is Test {
     patchedContract = new SafeDAOWallet(architect, address(registry));
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.deposit(address(token), 100);
+    patchedContract.depositTokens(address(token), 100);
 
     address[] memory oracles = new address[](2);
     oracles[0] = architect;
@@ -78,7 +80,7 @@ contract CypherVaultTest is Test {
     startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.deposit(address(token), 100);
+    patchedContract.depositTokens(address(token), 100);
     vm.stopPrank();
   }
 
@@ -94,8 +96,7 @@ contract CypherVaultTest is Test {
     assertEq(patchedContract.balanceOf(architect, address(token)), 100);
   }
 
-  /* HACKER FLOWS */
-  // ETH
+  //////////////////////////// ETH ////////////////////////////
   function testSetUpAttackETH() public {
     startHoax(hacker, 1 ether);
     assertEq(vulnerableContract.getContractBalance(), 100 ether);
@@ -227,108 +228,59 @@ contract CypherVaultTest is Test {
     vm.stopPrank();
   }
 
-  // ERC20
-  function testERC20WithdrawStoppedCypherApproves() public {}
-
-  function testERC20WithdrawStoppedCypherDenies() public {}
-
-  function testERC20WithdrawStoppedProtocolApproves() public {}
-
-  function testERC20WithdrawStoppedProtocolDenies() public {}
-
-  // Multiple ERC20's
-  function testMultipleERC20WithdrawStoppedCypherApproves() public {}
-
-  function testMultipleERC20WithdrawStoppedCypherDenies() public {}
-
-  function testMultipleERC20WithdrawStoppedProtocolApproves() public {}
-
-  function testMultipleERC20WithdrawStoppedProtocolDenies() public {}
-
-  /* WHALE FLOWS */
-  function testWithdrawETHIfWhitelisted() public {
-    uint256 prevBalance = whale.balance;
-
-    vm.prank(whale);
-    patchedContract.withdrawETH();
-
-    assertEq(whale.balance, prevBalance + 100);
-  }
-
-  function testWithdrawERC20IfWhitelisted() public {
-    uint256 prevBalance = token.balanceOf(whale);
-
-    vm.prank(whale);
-    patchedContract.withdraw(address(token), 51);
-
-    assertEq(token.balanceOf(whale), prevBalance + 51);
-  }
-
-  function testWithdrawMultipleERC20IfWhitelisted() public {}
-
-  function testWithdrawETHIfBelowThreshold() public {}
-
-  function testWithdrawERC20IfBelowThreshold() public {}
-
-  function testCannotWithdrawETHIfRevokedByOracle() public {}
-
-  function testCannotWithdrawERC20IfRevokedByOracle() public {}
-
-  function testCannotHackerWithdrawERC20WithMultipleOracles() public {}
-
   /* CONTRACTS */
   // CypherEscrow
-  function testCypherEscrowConstructorVariablesSetCorrectly() public {}
+  // function testCypherEscrowConstructorVariablesSetCorrectly() public {}
 
-  // escrowTokens
-  // escrows the correct amount of tokens
-  function testEscrowsCorrectAmountOfTokens() public {}
+  // // escrowTokens
+  // // escrows the correct amount of tokens
+  // function testEscrowsCorrectAmountOfTokens() public {}
 
-  // only allows calls from the source contract
-  function testOnlySourceContractModifierERC20() public {}
+  // // only allows calls from the source contract
+  // function testOnlySourceContractModifierERC20() public {}
 
-  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-  function testCannotNonSourceContractCallModifierERC20() public {}
+  // // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  // function testCannotNonSourceContractCallModifierERC20() public {}
 
-  // stores correct Transaction information
-  function testStoresCorrectTransactionInformationERC20() public {}
+  // // stores correct Transaction information
+  // function testStoresCorrectTransactionInformationERC20() public {}
 
-  // emits AmountStopped if stopped
-  function testEmitAmountStoppedEventERC20() public {}
+  // // emits AmountStopped if stopped
+  // function testEmitAmountStoppedEventERC20() public {}
 
-  // escrowETH
-  // escrows the correct amount of tokens
-  function testCorrectAmountOfETHEscrowed() public {}
+  // // escrowETH
+  // // escrows the correct amount of tokens
+  // function testCorrectAmountOfETHEscrowed() public {}
 
-  // only allows calls from the source contract
-  function testOnlySourceContractModifierETH() public {}
+  // // only allows calls from the source contract
+  // function testOnlySourceContractModifierETH() public {}
 
-  // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
-  function testCannotNonSourceContractCallModifierETH() public {}
+  // // does not allow calls from non-source contracts (prevents CALL2, like optimism hack)
+  // function testCannotNonSourceContractCallModifierETH() public {}
 
-  // stores correct Transaction information
-  function testStoresCorrectTransactionInformationETH() public {}
+  // // stores correct Transaction information
+  // function testStoresCorrectTransactionInformationETH() public {}
 
-  // emits AmountStopped if stopped
-  function testEmitAmountStoppedEventETH() public {}
+  // // emits AmountStopped if stopped
+  // function testEmitAmountStoppedEventETH() public {}
 
-  // CypherVault
-  // gets the correct escrow
-  function testGetsCorrectEscrow() public {}
+  // // CypherVault
+  // // gets the correct escrow
+  // function testGetsCorrectEscrow() public {}
 
-  // gets the correct delegator
-  function testGetsCorrectDelegator() public {}
+  // // gets the correct delegator
+  // function testGetsCorrectDelegator() public {}
 
-  // sets the correct escrow
-  function testSetsCorrectEscrow() public {}
+  // // sets the correct escrow
+  // function testSetsCorrectEscrow() public {}
 
-  // sets the correct delegator
-  function testSetsCorrectDelegator() public {}
+  // // sets the correct delegator
+  // function testSetsCorrectDelegator() public {}
 
-  // CypherRegistry
-  // creates the rate limiter with the correct variables
-  function testSetsCorrectEscrowInformation() public {}
+  // // CypherRegistry
+  // // creates the rate limiter with the correct variables
+  // function testSetsCorrectEscrowInformation() public {}
 
-  // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
-  function testCannotAnyoneButDelegatorDeployContract() public {}
+  // // does not allow anyone but the delegator to deploy (scoped to protocol address and delegator)
+  // function testCannotAnyoneButDelegatorDeployContract() public {}
 }

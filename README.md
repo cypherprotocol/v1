@@ -1,22 +1,16 @@
 <img align="right" width="150" height="150" top="100" src="./assets/readme.jpg">
 
-# cypher • [![ci](https://github.com/abigger87/femplate/actions/workflows/ci.yml/badge.svg)](https://github.com/abigger87/femplate/actions/workflows/ci.yml) ![license](https://img.shields.io/github/license/abigger87/femplate?label=license) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey)
+# 🔐 cypher • [![ci](https://github.com/abigger87/femplate/actions/workflows/ci.yml/badge.svg)](https://github.com/abigger87/femplate/actions/workflows/ci.yml) ![license](https://img.shields.io/github/license/abigger87/femplate?label=license) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey)
 
 A **Clean**, **Robust** Template for Foundry Projects.
 
-## Getting Started
+## Checklist
 
-Click [`use this template`](https://github.com/abigger87/femplate/generate) to create a new repository with this repo as the initial state.
+Ensure you completed **all of the steps** below before submitting your pull request:
 
-Or, if your repo already exists, run:
-
-```sh
-forge init --template https://github.com/abigger87/femplate
-git submodule update --init --recursive
-forge install
-```
-
-Run `./utils/rename.sh` to rename all instances of `femplate` with the name of your project/repository.
+- [ ] Ran `forge snapshot`?
+- [ ] Ran `npm run lint`?
+- [ ] Ran `forge test`?
 
 ## Blueprint
 
