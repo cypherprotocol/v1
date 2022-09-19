@@ -1,6 +1,4 @@
-# 🔐 cypher • [![ci](https://github.com/abigger87/femplate/actions/workflows/ci.yml/badge.svg)](https://github.com/abigger87/femplate/actions/workflows/ci.yml) ![license](https://img.shields.io/github/license/abigger87/femplate?label=license) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey)
-
-A **Clean**, **Robust** Template for Foundry Projects.
+# 🔐 cypher • [![ci](https://github.com/bmwoolf/cypher-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/bmwoolf/cypher-contracts/actions/workflows/ci.yml) ![license](https://img.shields.io/github/license/bmwoolf/cypher-contracts?label=license) ![solidity](https://img.shields.io/badge/solidity-^0.8.15-lightgrey)
 
 ## Checklist
 
