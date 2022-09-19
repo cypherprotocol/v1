@@ -21,6 +21,7 @@ From there, select how you want to be communicated with:
 
 ## Features
 
+- [ ] Check against flashbots (MEV)
 - [ ] Reentrancy protection mechanism
   - [x] ETH deposited reentrancy
   - [x] ERC20 deposited reentrancy
