@@ -13,6 +13,7 @@ remappings = [
   "forge-std=lib/forge-std/src/",
   "solmate=lib/solmate/src/",
 ]
+rpc_endpoints = { mainnet = "https://rpc.ankr.com/eth" }
 
 # Extreme Fuzzing CI Profile :P
 [profile.ci]
