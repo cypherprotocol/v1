@@ -31,6 +31,11 @@ From there, select how you want to be communicated with:
 - [ ] onERC721Received
 - [ ] onERC1155Received
 
+## Testing hacks
+
+88mph exploit: `forge test --fork-url <your_rpc_url> --fork-block-number 12516705`  
+Rari exploit: `forge test --fork-url <your_rpc_url> --fork-block-number 14684813`
+
 ## Checklist
 
 Ensure you completed **all of the steps** below before submitting your pull request:
