@@ -21,6 +21,7 @@ From there, select how you want to be communicated with:
 
 ## Features
 
+- [ ] Check against flashbots (MEV)
 - [ ] Reentrancy protection mechanism
   - [x] ETH deposited reentrancy
   - [x] ERC20 deposited reentrancy
@@ -29,6 +30,10 @@ From there, select how you want to be communicated with:
   - [ ] ERC20 deposited reentrancy
 - [ ] onERC721Received
 - [ ] onERC1155Received
+
+## Testing hacks
+
+Exploit: `forge test -vv`
 
 ## Checklist
 
