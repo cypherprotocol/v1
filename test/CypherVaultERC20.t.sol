@@ -82,13 +82,12 @@ contract CypherVaultTest is Test {
 
     // Deploy hack contract
     startHoax(hacker);
-    mockRari = new MockRari();
+    mockRari = new MockRari(address(token));
     attackTokenContract = new AttackToken(
-      address(vulnerableContract),
+      payable(address(vulnerableContract)),
       address(token),
       address(mockRari)
     );
-
     vm.stopPrank();
   }
 
