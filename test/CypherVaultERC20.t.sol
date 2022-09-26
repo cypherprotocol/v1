@@ -77,7 +77,7 @@ contract CypherVaultTest is Test {
     startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.depositTokens(address(token), 100);
+    patchedContract.depositTokens(address(token), 100); // now at 200
     vm.stopPrank();
 
     // Deploy hack contract
@@ -93,7 +93,7 @@ contract CypherVaultTest is Test {
 
   function testBalances() public {
     assertEq(token.balanceOf(address(vulnerableContract)), 100);
-    assertEq(token.balanceOf(address(patchedContract)), 100);
+    assertEq(token.balanceOf(address(patchedContract)), 200);
   }
 
   // deposit ERC20 as collateral (can be USDC), get ETH back
