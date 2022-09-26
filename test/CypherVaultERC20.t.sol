@@ -9,6 +9,8 @@ import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
+import { MockRari } from "./exploit/attacks/rari/MockRari.sol";
+import { MockRariCypher } from "./exploit/attacks/rari/MockRariCypher.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
@@ -18,6 +20,7 @@ contract CypherVaultTest is Test {
   CypherEscrow escrow;
   CypherRegistry registry;
   MockERC20 token;
+  MockRari mockRari;
 
   address hacker = address(0xBEEF);
   address architect = address(0xDEAD);
@@ -75,6 +78,17 @@ contract CypherVaultTest is Test {
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
     patchedContract.depositTokens(address(token), 100);
+    vm.stopPrank();
+
+    // Deploy hack contract
+    startHoax(hacker);
+    mockRari = new MockRari();
+    attackTokenContract = new AttackToken(
+      address(vulnerableContract),
+      address(token),
+      address(mockRari)
+    );
+
     vm.stopPrank();
   }
 
