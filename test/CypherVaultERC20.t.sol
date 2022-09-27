@@ -83,7 +83,7 @@ contract CypherVaultTest is Test {
     // deploy mockk Rari contracts with eth (to mimic a pool)
     mockRari = new MockRari(address(token));
     // send eth to mock Rari contracts
-    mockRari.depositInitialEtherForTest{value: 100 ether}();
+    mockRari.depositInitialEtherForTest{ value: 100 ether }();
     assertEq(mockRari.getContractBalance(), 100 ether);
   }
 
@@ -103,22 +103,20 @@ contract CypherVaultTest is Test {
       payable(address(mockRari))
     );
 
-    uint deposit = 50;
+    uint256 deposit = 50;
     // mint here since setUp is not working
-    token.mint(hacker, 100);
-    assertEq(token.balanceOf(hacker), 100);
+    token.mint(address(attackTokenContract), 100);
+    assertEq(token.balanceOf(address(attackTokenContract)), 100);
 
-    // approve the rari contract to transfer 50 tokens on the hackers behalf
-    MockERC20(token).approve(address(mockRari), deposit);
     // mockRari.depositTokens(deposit);
 
     // attack the contract by:
-      // 1. depositing 50 tokens
-      // 2. reentering on the borrow
+    // 1. depositing 50 tokens
+    // 2. reentering on the borrow
     attackTokenContract.attackRari(deposit);
 
     // expect hacker to have 100eth + the original 1eth
-    assertEq(hacker.balance, 101 ether);
+    assertEq(address(attackTokenContract).balance, 101 ether);
     vm.stopPrank();
   }
 }
