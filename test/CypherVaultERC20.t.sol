@@ -80,15 +80,11 @@ contract CypherVaultTest is Test {
     patchedContract.depositTokens(address(token), 100); // now at 200
     vm.stopPrank();
 
-    // Deploy hack contract
-    startHoax(hacker);
+    // deploy mockk Rari contracts with eth (to mimic a pool)
     mockRari = new MockRari(address(token));
-    attackTokenContract = new AttackToken(
-      payable(address(vulnerableContract)),
-      address(token),
-      address(mockRari)
-    );
-    vm.stopPrank();
+    // send eth to mock Rari contracts
+    mockRari.depositInitialEtherForTest{value: 100 ether}();
+    assertEq(mockRari.getContractBalance(), 100 ether);
   }
 
   function testBalances() public {
@@ -98,6 +94,31 @@ contract CypherVaultTest is Test {
 
   // deposit ERC20 as collateral (can be USDC), get ETH back
   function testHackToken() public {
-    emit log_string("new test");
+    emit log_string("testing hack");
+    assertEq(mockRari.getContractBalance(), 100 ether);
+    startHoax(hacker, 1 ether);
+    assertEq(hacker.balance, 1 ether);
+
+    attackTokenContract = new AttackToken(
+      payable(address(vulnerableContract)),
+      address(token),
+      address(mockRari)
+    );
+
+    uint deposit = 50;
+    // mint here since setUp is not working
+    token.mint(hacker, 100);
+
+    emit log_named_uint("balanceOf(hacker)", MockERC20(token).balanceOf(hacker));
+    assertEq(MockERC20(token).balanceOf(hacker), 100);
+
+    MockERC20(token).approve(address(mockRari), deposit);
+    mockRari.depositTokens(deposit);
+
+    attackTokenContract.attackRari(deposit);
+
+    // expect hacker to have 100eth
+    assertEq(hacker.balance, 101 ether);
+    vm.stopPrank();
   }
 }
