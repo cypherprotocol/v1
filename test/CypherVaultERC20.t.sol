@@ -100,9 +100,8 @@ contract CypherVaultTest is Test {
     assertEq(hacker.balance, 1 ether);
 
     attackTokenContract = new AttackToken(
-      payable(address(vulnerableContract)),
       address(token),
-      address(mockRari)
+      payable(address(mockRari))
     );
 
     uint deposit = 50;
@@ -110,12 +109,17 @@ contract CypherVaultTest is Test {
     token.mint(hacker, 100);
     assertEq(token.balanceOf(hacker), 100);
 
+    // approve the rari contract to transfer 50 tokens on the hackers behalf
     MockERC20(token).approve(address(mockRari), deposit);
-    mockRari.depositTokens(deposit);
+    // mockRari.depositTokens(deposit);
 
+    emit log_named_uint("mockRari ETH balance", mockRari.getContractBalance());
+    // attack the contract by:
+      // 1. depositing 50 tokens
+      // 2. reentering on the borrow
     attackTokenContract.attackRari(deposit);
 
-    // expect hacker to have 100eth
+    // expect hacker to have 100eth + the original 1eth
     assertEq(hacker.balance, 101 ether);
     vm.stopPrank();
   }
