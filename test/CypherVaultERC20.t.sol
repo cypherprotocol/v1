@@ -9,6 +9,8 @@ import { DAOWallet } from "./exploit/DAOWallet.sol";
 import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
+import { MockRari } from "./exploit/attacks/rari/MockRari.sol";
+import { MockRariCypher } from "./exploit/attacks/rari/MockRariCypher.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
 contract CypherVaultTest is Test {
@@ -18,6 +20,7 @@ contract CypherVaultTest is Test {
   CypherEscrow escrow;
   CypherRegistry registry;
   MockERC20 token;
+  MockRari mockRari;
 
   address hacker = address(0xBEEF);
   address architect = address(0xDEAD);
@@ -74,17 +77,46 @@ contract CypherVaultTest is Test {
     startHoax(whale, whale);
     patchedContract.deposit{ value: 100 }();
     token.approve(address(patchedContract), 100);
-    patchedContract.depositTokens(address(token), 100);
+    patchedContract.depositTokens(address(token), 100); // now at 200
     vm.stopPrank();
+
+    // deploy mockk Rari contracts with eth (to mimic a pool)
+    mockRari = new MockRari(address(token));
+    // send eth to mock Rari contracts
+    mockRari.depositInitialEtherForTest{value: 100 ether}();
+    assertEq(mockRari.getContractBalance(), 100 ether);
   }
 
   function testBalances() public {
     assertEq(token.balanceOf(address(vulnerableContract)), 100);
-    assertEq(token.balanceOf(address(patchedContract)), 100);
+    assertEq(token.balanceOf(address(patchedContract)), 200);
   }
 
   // deposit ERC20 as collateral (can be USDC), get ETH back
   function testHackToken() public {
-    emit log_string("new test");
+    emit log_string("testing hack");
+    assertEq(mockRari.getContractBalance(), 100 ether);
+    startHoax(hacker, 1 ether);
+    assertEq(hacker.balance, 1 ether);
+
+    attackTokenContract = new AttackToken(
+      payable(address(vulnerableContract)),
+      address(token),
+      address(mockRari)
+    );
+
+    uint deposit = 50;
+    // mint here since setUp is not working
+    token.mint(hacker, 100);
+    assertEq(token.balanceOf(hacker), 100);
+
+    MockERC20(token).approve(address(mockRari), deposit);
+    mockRari.depositTokens(deposit);
+
+    attackTokenContract.attackRari(deposit);
+
+    // expect hacker to have 100eth
+    assertEq(hacker.balance, 101 ether);
+    vm.stopPrank();
   }
 }
