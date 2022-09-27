@@ -94,7 +94,6 @@ contract CypherVaultTest is Test {
 
   // deposit ERC20 as collateral (can be USDC), get ETH back
   function testHackToken() public {
-    emit log_string("testing hack");
     assertEq(mockRari.getContractBalance(), 100 ether);
     startHoax(hacker, 1 ether);
     assertEq(hacker.balance, 1 ether);
@@ -113,7 +112,6 @@ contract CypherVaultTest is Test {
     MockERC20(token).approve(address(mockRari), deposit);
     // mockRari.depositTokens(deposit);
 
-    emit log_named_uint("mockRari ETH balance", mockRari.getContractBalance());
     // attack the contract by:
       // 1. depositing 50 tokens
       // 2. reentering on the borrow
