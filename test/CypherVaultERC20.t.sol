@@ -108,9 +108,9 @@ contract CypherVaultTest is Test {
     uint deposit = 50;
     // mint here since setUp is not working
     token.mint(hacker, 100);
-
+    emit log_named_address("token address in test", address(token));
     emit log_named_uint("balanceOf(hacker)", MockERC20(token).balanceOf(hacker));
-    assertEq(MockERC20(token).balanceOf(hacker), 100);
+    assertEq(token.balanceOf(hacker), 100);
 
     MockERC20(token).approve(address(mockRari), deposit);
     mockRari.depositTokens(deposit);
