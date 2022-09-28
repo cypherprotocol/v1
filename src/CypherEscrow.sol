@@ -257,7 +257,7 @@ contract CypherEscrow is ReentrancyGuard, Test {
     for (uint256 i = 0; i < to.length; i++) {
       isWhitelisted[to[i]] = true;
 
-      emit AddressAddedToWhitelist(to);
+      emit AddressAddedToWhitelist(to[i]);
     }
   }
 
