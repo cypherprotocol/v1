@@ -56,12 +56,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     uint256 amount,
     uint256 timestamp
   );
-  event OracleAdded(address newOracle, address oracleThatAdded);
   event TransactionDenied(
     address to,
     address tokenContract,
     uint256 amount
   );
+  event OracleAdded(address newOracle, address oracleThatAdded);
   event TimeLimitSet(uint256 timeLimit);
   event AddressAddedToWhitelist(address whale);
   event WithdrawApproved(address to);
