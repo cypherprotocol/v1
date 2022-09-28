@@ -56,7 +56,16 @@ contract CypherEscrow is ReentrancyGuard, Test {
     uint256 amount,
     uint256 timestamp
   );
+  event TransactionDenied(
+    address to,
+    address tokenContract,
+    uint256 amount
+  );
   event OracleAdded(address newOracle, address oracleThatAdded);
+  event TimeLimitSet(uint256 timeLimit);
+  event AddressAddedToWhitelist(address whale);
+  event WithdrawApproved(address to);
+  event WithdrawDenied(address to);
 
   modifier onlyOracle() {
     bool isAuthorized = isOracle[msg.sender];
@@ -215,11 +224,12 @@ contract CypherEscrow is ReentrancyGuard, Test {
     // need the to to be disapproved
     if (txInfo.approved == true) revert MustBeDisapproved();
 
-    // Send funds back
+    // Send ETH back
     if (txInfo.asset == address(0x0)) {
       (bool success, ) = address(sourceContract).call{ value: txInfo.amount }("");
       if (!success) revert TransferFailed();
     } else {
+    // Send ERC20 back
       /// TODO: this could be a potential exploit
       address token = txInfo.asset;
       /// @notice Our contract needs approval to swap tokens
@@ -229,12 +239,16 @@ contract CypherEscrow is ReentrancyGuard, Test {
         txInfo.amount
       );
     }
+
+    emit TransactionDenied(to, txInfo.asset, txInfo.amount);
   }
 
   /// @notice Set the timelimit for the tx before reverting
   /// @param _timeLimit The time limit in seconds
   function setTimeLimit(uint256 _timeLimit) external onlyOracle {
     timeLimit = _timeLimit;
+
+    emit TimeLimitSet(timeLimit);
   }
 
   /// @notice Add an address to the whitelist
@@ -242,6 +256,8 @@ contract CypherEscrow is ReentrancyGuard, Test {
   function addToWhitelist(address[] memory to) external onlyOracle {
     for (uint256 i = 0; i < to.length; i++) {
       isWhitelisted[to[i]] = true;
+
+      emit AddressAddedToWhitelist(to[i]);
     }
   }
 
@@ -249,12 +265,16 @@ contract CypherEscrow is ReentrancyGuard, Test {
   /// @param to The address to approve to
   function approveWithdraw(address to) external onlyOracle {
     tokenInfo[to].approved = true;
+
+    emit WithdrawApproved(to);
   }
 
   /// @notice Disapprove a withdraw to a user
   /// @param to The address to disapprove
   function disapproveWithdraw(address to) external onlyOracle {
     tokenInfo[to].approved = false;
+
+    emit WithdrawDenied(to);
   }
 
   /// @dev Add a new oracle

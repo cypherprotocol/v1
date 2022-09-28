@@ -13,7 +13,7 @@ import { MockRari } from "./exploit/attacks/rari/MockRari.sol";
 import { MockRariCypher } from "./exploit/attacks/rari/MockRariCypher.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
-contract CypherVaultTest is Test {
+contract CypherVaultTestERC20 is Test {
   AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
@@ -83,7 +83,7 @@ contract CypherVaultTest is Test {
     // deploy mockk Rari contracts with eth (to mimic a pool)
     mockRari = new MockRari(address(token));
     // send eth to mock Rari contracts
-    mockRari.depositInitialEtherForTest{value: 100 ether}();
+    mockRari.depositInitialEtherForTest{ value: 100 ether }();
     assertEq(mockRari.getContractBalance(), 100 ether);
   }
 
@@ -94,29 +94,29 @@ contract CypherVaultTest is Test {
 
   // deposit ERC20 as collateral (can be USDC), get ETH back
   function testHackToken() public {
-    emit log_string("testing hack");
     assertEq(mockRari.getContractBalance(), 100 ether);
     startHoax(hacker, 1 ether);
     assertEq(hacker.balance, 1 ether);
 
     attackTokenContract = new AttackToken(
-      payable(address(vulnerableContract)),
       address(token),
-      address(mockRari)
+      payable(address(mockRari))
     );
 
-    uint deposit = 50;
+    uint256 deposit = 50;
     // mint here since setUp is not working
-    token.mint(hacker, 100);
-    assertEq(token.balanceOf(hacker), 100);
+    token.mint(address(attackTokenContract), 100);
+    assertEq(token.balanceOf(address(attackTokenContract)), 100);
 
-    MockERC20(token).approve(address(mockRari), deposit);
-    mockRari.depositTokens(deposit);
+    // mockRari.depositTokens(deposit);
 
+    // attack the contract by:
+    // 1. depositing 50 tokens
+    // 2. reentering on the borrow
     attackTokenContract.attackRari(deposit);
 
-    // expect hacker to have 100eth
-    assertEq(hacker.balance, 101 ether);
+    // expect hacker to have 100eth + the original 1eth
+    assertEq(address(attackTokenContract).balance, 101 ether);
     vm.stopPrank();
   }
 }
