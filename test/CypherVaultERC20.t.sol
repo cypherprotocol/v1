@@ -13,7 +13,7 @@ import { MockRari } from "./exploit/attacks/rari/MockRari.sol";
 import { MockRariCypher } from "./exploit/attacks/rari/MockRariCypher.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
-contract CypherVaultTest is Test {
+contract CypherVaultTestERC20 is Test {
   AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
