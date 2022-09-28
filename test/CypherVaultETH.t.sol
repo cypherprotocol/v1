@@ -4,17 +4,15 @@
 import "forge-std/Test.sol";
 
 import { CypherEscrow } from "../src/CypherEscrow.sol";
-import { Attack } from "./exploit/Attack.sol";
-import { AttackToken } from "./exploit/ERC20/Attacktoken.sol";
-import { DAOWallet } from "./exploit/DAOWallet.sol";
-import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
+import { Attack } from "./exploits/ETHReentrancy/Attack.sol";
+import { DAOWallet } from "./exploits/ETHReentrancy/DAOWallet.sol";
+import { SafeDAOWallet } from "./exploits/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
-contract CypherVaultTest is Test {
+contract CypherVaultETHTest is Test {
   Attack attackContract;
-  AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
   CypherEscrow escrow;

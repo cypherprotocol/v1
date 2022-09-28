@@ -4,16 +4,16 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import { CypherEscrow } from "../src/CypherEscrow.sol";
-import { AttackToken } from "./exploit/ERC20/Attacktoken.sol";
-import { DAOWallet } from "./exploit/DAOWallet.sol";
-import { SafeDAOWallet } from "./exploit/SafeDAOWallet.sol";
+import { AttackToken } from "./exploits/ERC20Reentrancy/Attack.sol";
+import { DAOWallet } from "./exploits/ERC20Reentrancy/DAOWallet.sol";
+import { SafeDAOWallet } from "./exploits/SafeDAOWallet.sol";
 import { CypherRegistry } from "../src/CypherRegistry.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
-import { MockRari } from "./exploit/attacks/rari/MockRari.sol";
-import { MockRariCypher } from "./exploit/attacks/rari/MockRariCypher.sol";
+import { MockRari } from "./exploits/attacks/rari/MockRari.sol";
+import { MockRariCypher } from "./exploits/attacks/rari/MockRariCypher.sol";
 import { Bool } from "./lib/BoolTool.sol";
 
-contract CypherVaultTestERC20 is Test {
+contract CypherVaultERC20Test is Test {
   AttackToken attackTokenContract;
   DAOWallet vulnerableContract;
   SafeDAOWallet patchedContract;
