@@ -22,12 +22,12 @@ From there, select how you want to be communicated with:
 ## Features
 
 - [ ] Check against flashbots (MEV)
-- [ ] Reentrancy protection mechanism
+- [x] Reentrancy protection mechanism
   - [x] ETH deposited reentrancy
   - [x] ERC20 deposited reentrancy
-- [ ] Testing Suite
+- [x] Testing Suite
   - [x] ETH deposited reentrancy
-  - [ ] ERC20 deposited reentrancy
+  - [x] ERC20 deposited reentrancy
 - [ ] onERC721Received
 - [ ] onERC1155Received
 
@@ -42,6 +42,15 @@ Ensure you completed **all of the steps** below before submitting your pull requ
 - [ ] Ran `forge snapshot`?
 - [ ] Ran `npm run lint`?
 - [ ] Ran `forge test`?
+
+## Commits
+
+- ♻️ refactor
+- 📝 docs
+- ✨ feat
+- 👷‍♂️ edit
+- 🎨 cleanup
+- ⚡️ gas optimize
 
 ## Blueprint
 
