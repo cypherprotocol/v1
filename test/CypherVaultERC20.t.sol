@@ -74,8 +74,8 @@ contract CypherVaultERC20Test is Test {
         // deploy mockk Rari contracts with eth (to mimic a pool)
         mockRari = new MockRari(address(token));
         // send eth to mock Rari contracts
-        mockRari.depositInitialEtherForTest{value: 100 ether}();
-        assertEq(mockRari.getContractBalance(), 100 ether);
+        address(mockRari).call{value: 100 ether}("");
+        assertEq(address(mockRari).balance, 100 ether);
     }
 
     function testBalances() public {
