@@ -24,6 +24,13 @@ contract CypherRegistry {
     _;
   }
 
+  /// @dev Creates a new escrow for a protocol
+  /// @param protocol The address of the contract to protect
+  /// @param chainId The chain that the protocol smart contract originates from
+  /// @param token The address of the token that is being stored in the protocols smart contracts
+  /// @param tokenThreshold The amount per tx to limit on withdraw
+  /// @param timeLimit How long the funds should stay locked up until release (if the team does not respond)
+  /// @param oracles The addresses of the signers who can release the funds
   function createEscrow(
     address protocol,
     uint256 chainId,
