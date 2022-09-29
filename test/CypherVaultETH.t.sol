@@ -88,12 +88,12 @@ contract CypherVaultETHTest is Test {
     //////////////////////////// ETH ////////////////////////////
     function testSetUpAttackETH() public {
         startHoax(hacker, 1 ether);
-        assertEq(vulnerableContract.getContractBalance(), 100 ether);
+        assertEq(address(vulnerableContract).balance, 100 ether);
 
         attackContract = new Attack(payable(address(vulnerableContract)));
         attackContract.attack{value: 1 ether}();
 
-        assertEq(vulnerableContract.getContractBalance(), 0);
+        assertEq(address(vulnerableContract).balance, 0);
         assertEq(hacker.balance, 101 ether);
         vm.stopPrank();
     }
@@ -101,7 +101,7 @@ contract CypherVaultETHTest is Test {
     function testETHWithdrawEscrowStopped() public {
         // when pulling over threshold, it works. not less than
         startHoax(hacker, 10);
-        assertEq(patchedContract.getContractBalance(), 200);
+        assertEq(address(patchedContract).balance, 200);
         // hacker withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped (hopefully)
@@ -115,7 +115,7 @@ contract CypherVaultETHTest is Test {
     function testETHWithdrawNewWhaleStoppedCypherApproves() public {
         // when pulling over threshold, it works. not less than
         startHoax(newWhale, 100);
-        assertEq(patchedContract.getContractBalance(), 200);
+        assertEq(address(patchedContract).balance, 200);
         // whale withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped, deposit and withdraw more than threshold
@@ -136,7 +136,7 @@ contract CypherVaultETHTest is Test {
 
     function testETHWithdrawStoppedCypherDenies() public {
         startHoax(hacker, 100);
-        assertEq(patchedContract.getContractBalance(), 200);
+        assertEq(address(patchedContract).balance, 200);
         // hacker withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped, deposit and withdraw more than threshold
@@ -160,14 +160,14 @@ contract CypherVaultETHTest is Test {
 
         escrow.denyTransaction(hacker);
         // protocol balance should get the funds back + hacker deposited funds
-        assertEq(patchedContract.getContractBalance(), 265);
+        assertEq(address(patchedContract).balance, 265);
         assertEq(hacker.balance, 35);
         vm.stopPrank();
     }
 
     function testETHWithdrawStoppedProtocolApproves() public {
         startHoax(newWhale, 100);
-        assertEq(patchedContract.getContractBalance(), 200);
+        assertEq(address(patchedContract).balance, 200);
         // newWhale withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped, deposit and withdraw more than threshold
@@ -189,7 +189,7 @@ contract CypherVaultETHTest is Test {
 
     function testETHWithdrawStoppedProtocolDenies() public {
         startHoax(hacker, 100);
-        assertEq(patchedContract.getContractBalance(), 200);
+        assertEq(address(patchedContract).balance, 200);
         // hacker withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped, deposit and withdraw more than threshold
@@ -212,7 +212,7 @@ contract CypherVaultETHTest is Test {
 
         escrow.denyTransaction(hacker);
         // protocol balance should get the funds back + hacker deposited funds
-        assertEq(patchedContract.getContractBalance(), 265);
+        assertEq(address(patchedContract).balance, 265);
         assertEq(hacker.balance, 35);
         vm.stopPrank();
     }
