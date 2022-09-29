@@ -43,6 +43,15 @@ Ensure you completed **all of the steps** below before submitting your pull requ
 - [ ] Ran `npm run lint`?
 - [ ] Ran `forge test`?
 
+## Commits
+
+- ♻️ refactor
+- 📝 docs
+- ✨ feat
+- 👷‍♂️ edit
+- 🎨 cleanup
+- ⚡️ gas optimize
+
 ## Blueprint
 
 ```ml
