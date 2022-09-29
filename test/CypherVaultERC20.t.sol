@@ -104,7 +104,7 @@ contract CypherVaultERC20Test is Test {
         attackTokenContract.attackRari(deposit);
 
         // expect attack contract to have 100eth
-        assertEq(address(attackTokenContract).balance, 100 ether);
+        assertEq(address(hacker).balance, 101 ether);
         vm.stopPrank();
     }
 }
