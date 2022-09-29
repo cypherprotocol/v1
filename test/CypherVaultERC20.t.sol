@@ -96,15 +96,13 @@ contract CypherVaultERC20Test is Test {
         token.mint(address(attackTokenContract), 100);
         assertEq(token.balanceOf(address(attackTokenContract)), 100);
 
-        // mockRari.depositTokens(deposit);
-
         // attack the contract by:
         // 1. depositing 50 tokens
         // 2. reentering on the borrow
         attackTokenContract.attackRari(deposit);
 
         // expect hacker to have 100eth + the original 1eth
-        assertEq(address(attackTokenContract).balance, 101 ether);
+        assertEq(hacker.balance, 101 ether);
         vm.stopPrank();
     }
 }
