@@ -104,7 +104,7 @@ contract CypherVaultETHTest is Test {
         assertEq(address(patchedContract).balance, 200);
         // hacker withdraws from patchContract
         attackContract = new Attack(payable(address(patchedContract)));
-        // gets stopped (hopefully)
+        // gets stopped
         vm.expectRevert(abi.encodeWithSignature("TransferFailed()"));
         attackContract.attack{value: 10}();
         // check to make sure he cannot withdraw on his own
