@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {CypherEscrow} from "../src/CypherEscrow.sol";
 import {AttackToken} from "./exploits/ERC20Reentrancy/Attack.sol";
+import {AttackSafeToken} from "./exploits/ERC20Reentrancy/AttackSafe.sol";
 import {DAOWallet} from "./exploits/ERC20Reentrancy/DAOWallet.sol";
 import {SafeDAOWallet} from "./exploits/SafeDAOWallet.sol";
 import {CypherRegistry} from "../src/CypherRegistry.sol";
@@ -16,12 +17,11 @@ import {Bool} from "./lib/BoolTool.sol";
 contract CypherVaultERC20Test is Test {
     AttackToken attackTokenContract;
     DAOWallet vulnerableContract;
-    // SafeDAOWallet patchedContract;
     CypherEscrow escrow;
     CypherRegistry registry;
     MockERC20 token;
     MockRari mockRari;
-    SafeMockRari patchedContract;
+    SafeMockRari safeMockRari;
 
     address hacker = address(0xBEEF);
     address architect = address(0xDEAD);
@@ -49,9 +49,9 @@ contract CypherVaultERC20Test is Test {
 
         // Deposit ERC20 into contract protected by Cypher
         startHoax(architect, architect);
-        patchedContract = new SafeMockRari(address(token), architect, address(registry));
-        token.approve(address(patchedContract), 100);
-        patchedContract.depositTokens(100);
+        safeMockRari = new SafeMockRari(address(token), architect, address(registry));
+        token.approve(address(safeMockRari), 100);
+        safeMockRari.depositTokens(100);
 
 
         address[] memory oracles = new address[](2);
@@ -59,7 +59,7 @@ contract CypherVaultERC20Test is Test {
         oracles[1] = cypher;
 
         // Deploy escrow contract from designated architect
-        escrow = CypherEscrow(registry.createEscrow(address(patchedContract), 1, address(token), 50, 1 days, oracles));
+        escrow = CypherEscrow(registry.createEscrow(address(safeMockRari), 1, address(token), 50, 1 days, oracles));
 
         address[] memory whales = new address[](1);
         whales[0] = whale;
@@ -68,9 +68,9 @@ contract CypherVaultERC20Test is Test {
         vm.stopPrank();
 
         startHoax(whale, whale);
-        // patchedContract.depositTokens(100);
-        token.approve(address(patchedContract), 100);
-        patchedContract.depositTokens(100); // now at 200
+        // safeMockRari.depositTokens(100);
+        token.approve(address(safeMockRari), 100);
+        safeMockRari.depositTokens(100); // now at 200
         vm.stopPrank();
 
         // deploy mockk Rari contracts with eth (to mimic a pool)
@@ -79,13 +79,13 @@ contract CypherVaultERC20Test is Test {
         address(mockRari).call{value: 100 ether}("");
         assertEq(address(mockRari).balance, 100 ether);
         // send eth to safe mock Rari contract
-        address(patchedContract).call{value: 100 ether}("");
-        assertEq(address(patchedContract).balance, 100 ether);
+        address(safeMockRari).call{value: 100 ether}("");
+        assertEq(address(safeMockRari).balance, 100 ether);
     }
 
     function testBalances() public {
         assertEq(token.balanceOf(address(vulnerableContract)), 100);
-        assertEq(token.balanceOf(address(patchedContract)), 200);
+        assertEq(token.balanceOf(address(safeMockRari)), 200);
     }
 
     // deposit ERC20 as collateral (can be USDC), get ETH back
@@ -114,7 +114,7 @@ contract CypherVaultERC20Test is Test {
         startHoax(hacker, 1 ether);
         assertEq(hacker.balance, 1 ether);
 
-        attackTokenContract = new AttackToken(address(token), payable(address(patchedContract)));
+        attackTokenContract = new AttackToken(address(token), payable(address(safeMockRari)));
         // rust stack times out if we do gwei
         uint256 deposit = 1 ether;
         // mint here since setUp is not working
