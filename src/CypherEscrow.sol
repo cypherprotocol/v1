@@ -10,7 +10,6 @@ error NotOracle();
 error NotSourceContract();
 error NotApproved();
 error MustBeDisapproved();
-error ChainIdMismatch();
 error TransferFailed();
 
 /// @author bmwoolf and zksoju
@@ -22,7 +21,6 @@ contract CypherEscrow is ReentrancyGuard {
 
     address public token;
 
-    uint256 public chainId;
     uint256 public tokenThreshold;
     uint256 public timeLimit;
     uint256 public timePeriod;
@@ -37,7 +35,6 @@ contract CypherEscrow is ReentrancyGuard {
         address origin;
         address asset;
         uint256 amount;
-        uint256 assetChainId;
         bool approved;
         bool initialized;
     }
@@ -59,14 +56,12 @@ contract CypherEscrow is ReentrancyGuard {
 
     constructor(
         address _sourceContract,
-        uint256 _chainId,
         address _token,
         uint256 _tokenThreshold,
         uint256 _timeLimit,
         address[] memory _oracles
     ) {
         token = _token;
-        chainId = _chainId;
         tokenThreshold = _tokenThreshold;
         timeLimit = _timeLimit;
         sourceContract = _sourceContract;
@@ -78,15 +73,9 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Check if an ETH withdraw is valid
     /// @param to The address to withdraw to
-    /// @param chainId_ The chain id of the token contract
-    function escrowETH(
-        address from,
-        address to,
-        uint256 chainId_
-    ) external payable nonReentrant {
+    function escrowETH(address from, address to) external payable nonReentrant {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
-        if (chainId != chainId_) revert ChainIdMismatch();
 
         Transaction memory txInfo = tokenInfo[to];
 
@@ -100,7 +89,7 @@ contract CypherEscrow is ReentrancyGuard {
         } else if (txInfo.initialized == false) {
             // if they havent been cached, add them to the cache
             // addToLimiter(to, sourceContract, amount, chainId_);
-            addToLimiter(msg.sender, to, address(0x0), amount, chainId_);
+            addToLimiter(msg.sender, to, address(0x0), amount);
         } else {
             // check if they have been approved
             if (txInfo.approved != true) revert NotApproved();
@@ -117,17 +106,14 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param to The address to withdraw to
     /// @param asset The ERC20 token contract to withdraw from
     /// @param amount The amount to withdraw
-    /// @param chainId_ The chain id of the token contract
     function escrowTokens(
         address from,
         address to,
         address asset,
-        uint256 amount,
-        uint256 chainId_
+        uint256 amount
     ) external {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
-        if (chainId != chainId_) revert ChainIdMismatch();
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[from] == true) {
@@ -136,7 +122,7 @@ contract CypherEscrow is ReentrancyGuard {
         } else if (tokenInfo[to].initialized == false) {
             // if they havent been cached
             // add them to the cache
-            addToLimiter(from, to, asset, amount, chainId_);
+            addToLimiter(from, to, asset, amount);
         } else {
             // check if they have been approved
             if (tokenInfo[msg.sender].approved != true) revert NotApproved();
@@ -153,17 +139,14 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param _to The address to add to the limiter
     /// @param _tokenContract The ERC20 token contract to add to the limiter (ETH is 0x00..00)
     /// @param _amount The amount to add to the limiter
-    /// @param chainId_ The chain id of the token contract
     function addToLimiter(
         address _from,
         address _to,
         address _tokenContract,
-        uint256 _amount,
-        uint256 chainId_
+        uint256 _amount
     ) internal {
         tokenInfo[_to].origin = _from;
         tokenInfo[_to].asset = _tokenContract;
-        tokenInfo[_to].assetChainId = chainId_;
         tokenInfo[_to].amount = _amount;
         tokenInfo[_to].approved = false;
         tokenInfo[_to].initialized = true;

@@ -53,13 +53,12 @@ contract CypherVaultERC20Test is Test {
         token.approve(address(safeMockRari), 100);
         safeMockRari.depositTokens(100);
 
-
         address[] memory oracles = new address[](2);
         oracles[0] = architect;
         oracles[1] = cypher;
 
         // Deploy escrow contract from designated architect
-        escrow = CypherEscrow(registry.createEscrow(address(safeMockRari), 1, address(token), 50, 1 days, oracles));
+        escrow = CypherEscrow(registry.createEscrow(address(safeMockRari), address(token), 50, 1 days, oracles));
 
         address[] memory whales = new address[](1);
         whales[0] = whale;
@@ -110,7 +109,7 @@ contract CypherVaultERC20Test is Test {
     }
 
     function testCypher() public {
-      assertEq(address(mockRari).balance, 100 ether);
+        assertEq(address(mockRari).balance, 100 ether);
         startHoax(hacker, 1 ether);
         assertEq(hacker.balance, 1 ether);
 
