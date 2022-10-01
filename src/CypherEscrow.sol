@@ -30,14 +30,13 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice Whales that are whitelisted to withdraw without rate limiting
     mapping(address => bool) public isWhitelisted;
     /// @notice Request info mapping
-    mapping(address => Transaction) public tokenInfo;
+    mapping(bytes32 => Transaction) public tokenInfo;
 
     /// @notice Withdraw request info
     struct Transaction {
         address origin;
         address asset;
         uint256 amount;
-        uint256 assetChainId;
         bool approved;
         bool initialized;
     }
@@ -81,14 +80,16 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param chainId_ The chain id of the token contract
     function escrowETH(
         address from,
-        address to,
-        uint256 chainId_
+        address to
     ) external payable nonReentrant {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
         if (chainId != chainId_) revert ChainIdMismatch();
 
-        Transaction memory txInfo = tokenInfo[to];
+        // create key hash for tokenInfo mapping
+        bytes32 key = keccak256(abi.encodePacked(from, to, address(0), msg.value));
+
+        Transaction memory txInfo = tokenInfo[key];
 
         uint256 amount = msg.value;
 
@@ -99,8 +100,8 @@ contract CypherEscrow is ReentrancyGuard {
             if (!success) revert TransferFailed();
         } else if (txInfo.initialized == false) {
             // if they havent been cached, add them to the cache
-            // addToLimiter(to, sourceContract, amount, chainId_);
-            addToLimiter(msg.sender, to, address(0x0), amount, chainId_);
+            // addToLimiter(to, sourceContract, amount);
+            addToLimiter(msg.sender, to, address(0x0), amount);
         } else {
             // check if they have been approved
             if (txInfo.approved != true) revert NotApproved();
@@ -272,5 +273,19 @@ contract CypherEscrow is ReentrancyGuard {
     /// @return Token amount
     function getApprovalStatus(address to) external returns (bool) {
         return tokenInfo[to].approved;
+    }
+
+    /// @dev Hash the transaction information for reads
+    /// @param from The address to grab from
+    /// @param to The address to send to
+    /// @param asset The asset to send
+    /// @param amount The amount to send
+    function hashTransactionKey(
+        address from,
+        address to,
+        address asset,
+        uint256 amount
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(from, to, asset, amount));
     }
 }
