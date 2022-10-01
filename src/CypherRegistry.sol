@@ -43,4 +43,8 @@ contract CypherRegistry {
 
         return address(escrow);
     }
+
+    function assignEscrow(address protocol, address escrow) public architectOnly(protocol) {
+        getEscrowForProtocol[protocol] = CypherEscrow(escrow);
+    }
 }
