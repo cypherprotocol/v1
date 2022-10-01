@@ -1,21 +1,26 @@
 pragma solidity ^0.8.0;
-import { CypherRegistry } from "./CypherRegistry.sol";
+import {CypherRegistry} from "./CypherRegistry.sol";
 
 abstract contract CypherProtocol {
-  address registry;
-  address architect;
+    address registry;
+    address architect;
+    string protocolName;
 
-  constructor(address _architect, address _registry) {
-    architect = _architect;
-    registry = _registry;
-  }
+    constructor(
+        string memory _protocolName,
+        address _architect,
+        address _registry
+    ) {
+        architect = _architect;
+        registry = _registry;
+        protocolName = _protocolName;
+    }
 
-  function getEscrow() internal view returns (address) {
-    return
-      address(CypherRegistry(registry).getEscrowForProtocol(address(this)));
-  }
+    function getEscrow() internal view returns (address) {
+        return address(CypherRegistry(registry).getEscrowForProtocol(address(this)));
+    }
 
-  function getArchitect() external view returns (address) {
-    return architect;
-  }
+    function getArchitect() external view returns (address) {
+        return architect;
+    }
 }

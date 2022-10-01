@@ -19,7 +19,7 @@ contract Deploy is Script {
 
         address[] memory oracles = new address[](1);
         oracles[0] = msg.sender;
-        cypherRegistry.createEscrow(address(daoWallet), 1, address(mockERC20), 100, 1 days, oracles);
+        cypherRegistry.createEscrow(address(daoWallet), address(mockERC20), 100, 1 days, oracles);
         vm.stopBroadcast();
     }
 }

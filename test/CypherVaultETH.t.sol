@@ -58,7 +58,7 @@ contract CypherVaultETHTest is Test {
         oracles[1] = cypher;
 
         // Deploy escrow contract from designated architect
-        escrow = CypherEscrow(registry.createEscrow(address(patchedContract), 1, address(token), 50, 1 days, oracles));
+        escrow = CypherEscrow(registry.createEscrow(address(patchedContract), address(token), 50, 1 days, oracles));
 
         address[] memory whales = new address[](1);
         whales[0] = whale;

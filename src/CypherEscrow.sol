@@ -10,7 +10,6 @@ error NotOracle();
 error NotSourceContract();
 error NotApproved();
 error MustBeDisapproved();
-error ChainIdMismatch();
 error TransferFailed();
 
 /// @author bmwoolf and zksoju
@@ -22,7 +21,6 @@ contract CypherEscrow is ReentrancyGuard {
 
     address public token;
 
-    uint256 public chainId;
     uint256 public tokenThreshold;
     uint256 public timeLimit;
     uint256 public timePeriod;
@@ -35,6 +33,7 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice Withdraw request info
     struct Transaction {
         address origin;
+        address destination;
         address asset;
         uint256 amount;
         bool approved;
@@ -58,14 +57,12 @@ contract CypherEscrow is ReentrancyGuard {
 
     constructor(
         address _sourceContract,
-        uint256 _chainId,
         address _token,
         uint256 _tokenThreshold,
         uint256 _timeLimit,
         address[] memory _oracles
     ) {
         token = _token;
-        chainId = _chainId;
         tokenThreshold = _tokenThreshold;
         timeLimit = _timeLimit;
         sourceContract = _sourceContract;
@@ -77,17 +74,12 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Check if an ETH withdraw is valid
     /// @param to The address to withdraw to
-    /// @param chainId_ The chain id of the token contract
-    function escrowETH(
-        address from,
-        address to
-    ) external payable nonReentrant {
+    function escrowETH(address from, address to) external payable nonReentrant {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
-        if (chainId != chainId_) revert ChainIdMismatch();
 
         // create key hash for tokenInfo mapping
-        bytes32 key = keccak256(abi.encodePacked(from, to, address(0), msg.value));
+        bytes32 key = hashTransactionKey(from, to, address(0), amount);
 
         Transaction memory txInfo = tokenInfo[key];
 
@@ -100,8 +92,8 @@ contract CypherEscrow is ReentrancyGuard {
             if (!success) revert TransferFailed();
         } else if (txInfo.initialized == false) {
             // if they havent been cached, add them to the cache
-            // addToLimiter(to, sourceContract, amount);
-            addToLimiter(msg.sender, to, address(0x0), amount);
+            // addToLimiter(to, sourceContract, amount, chainId_);
+            addToLimiter(key, msg.sender, to, address(0x0), amount);
         } else {
             // check if they have been approved
             if (txInfo.approved != true) revert NotApproved();
@@ -118,26 +110,26 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param to The address to withdraw to
     /// @param asset The ERC20 token contract to withdraw from
     /// @param amount The amount to withdraw
-    /// @param chainId_ The chain id of the token contract
     function escrowTokens(
         address from,
         address to,
         address asset,
-        uint256 amount,
-        uint256 chainId_
+        uint256 amount
     ) external {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
-        if (chainId != chainId_) revert ChainIdMismatch();
+
+        // create key hash for tokenInfo mapping
+        bytes32 key = hashTransactionKey(from, to, asset, amount);
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[from] == true) {
             bool result = IERC20(asset).transferFrom(sourceContract, to, amount);
             if (!result) revert TransferFailed();
-        } else if (tokenInfo[to].initialized == false) {
+        } else if (tokenInfo[key].initialized == false) {
             // if they havent been cached
             // add them to the cache
-            addToLimiter(from, to, asset, amount, chainId_);
+            addToLimiter(key, from, to, asset, amount);
         } else {
             // check if they have been approved
             if (tokenInfo[msg.sender].approved != true) revert NotApproved();
@@ -151,32 +143,38 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @notice Add a user to the limiter
+    /// @param key The key to check the Transaction struct info
+    /// @param _from The address from to add to the limiter
     /// @param _to The address to add to the limiter
     /// @param _tokenContract The ERC20 token contract to add to the limiter (ETH is 0x00..00)
     /// @param _amount The amount to add to the limiter
-    /// @param chainId_ The chain id of the token contract
     function addToLimiter(
+        bytes32 key,
         address _from,
         address _to,
         address _tokenContract,
-        uint256 _amount,
-        uint256 chainId_
+        uint256 _amount
     ) internal {
-        tokenInfo[_to].origin = _from;
-        tokenInfo[_to].asset = _tokenContract;
-        tokenInfo[_to].assetChainId = chainId_;
-        tokenInfo[_to].amount = _amount;
-        tokenInfo[_to].approved = false;
-        tokenInfo[_to].initialized = true;
+        tokenInfo[key].origin = _from;
+        tokenInfo[key].destination = _to;
+        tokenInfo[key].asset = _tokenContract;
+        tokenInfo[key].amount = _amount;
+        tokenInfo[key].approved = false;
+        tokenInfo[key].initialized = true;
 
         emit AmountStopped(_from, _to, _tokenContract, _amount);
     }
 
     /// @notice Send approved funds to a user
+    /// @param key The key to check the Transaction struct info
     /// @param to The address to send to
     /// @param tokenContract The contract address of the token to send
-    function releaseTokens(address to, address tokenContract) external onlyOracle nonReentrant {
-        Transaction memory txInfo = tokenInfo[to];
+    function releaseTokens(
+      bytes32 key,
+      address to,
+      address tokenContract
+    ) external onlyOracle nonReentrant {
+        Transaction memory txInfo = tokenInfo[key];
 
         if (txInfo.approved != true) revert NotApproved();
         uint256 amount = txInfo.amount;
@@ -192,13 +190,13 @@ contract CypherEscrow is ReentrancyGuard {
             if (!result) revert TransferFailed();
         }
 
-        emit AmountSent(txInfo.origin, to, tokenContract, amount);
+        emit AmountSent(txInfo.origin, txInfo.destination, tokenContract, amount);
     }
 
     /// @notice Sends the funds back to the protocol- needs to be after they have fixed the exploit
-    /// @param to the funds back to the protocol- needs to be after they have fixed the exploit
-    function denyTransaction(address to) external onlyOracle nonReentrant {
-        Transaction memory txInfo = tokenInfo[to];
+    /// @param key The key to check the Transaction struct info
+    function denyTransaction(bytes32 key) external onlyOracle nonReentrant {
+        Transaction memory txInfo = tokenInfo[key];
 
         // need the to to be disapproved
         if (txInfo.approved == true) revert MustBeDisapproved();
@@ -212,10 +210,10 @@ contract CypherEscrow is ReentrancyGuard {
             /// TODO: this could be a potential exploit
             address token = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token).transferFrom(to, token, txInfo.amount);
+            bool result = IERC20(token).transferFrom(txInfo.destination, token, txInfo.amount);
         }
 
-        emit TransactionDenied(to, txInfo.asset, txInfo.amount);
+        emit TransactionDenied(txInfo.destination, txInfo.asset, txInfo.amount);
     }
 
     /// @notice Set the timelimit for the tx before reverting
@@ -227,7 +225,7 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @notice Add an address to the whitelist
-    /// @param to The address to add to the whitelist
+    /// @param to The addresses to add to the whitelist
     function addToWhitelist(address[] memory to) external onlyOracle {
         for (uint256 i = 0; i < to.length; i++) {
             isWhitelisted[to[i]] = true;
@@ -237,19 +235,20 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @notice Approve a withdraw to a user
+    /// @param key The key to check the Transaction struct info
     /// @param to The address to approve to
-    function approveWithdraw(address to) external onlyOracle {
-        tokenInfo[to].approved = true;
+    function approveWithdraw(bytes32 key) external onlyOracle {
+        tokenInfo[key].approved = true;
 
-        emit WithdrawApproved(msg.sender, to);
+        emit WithdrawApproved(msg.sender, tokenInfo[key].to);
     }
 
     /// @notice Disapprove a withdraw to a user
-    /// @param to The address to disapprove
-    function disapproveWithdraw(address to) external onlyOracle {
-        tokenInfo[to].approved = false;
+    /// @param key The key to check the Transaction struct info
+    function disapproveWithdraw(bytes32 key) external onlyOracle {
+        tokenInfo[key].approved = false;
 
-        emit WithdrawDisapproved(msg.sender, to);
+        emit WithdrawDisapproved(msg.sender, tokenInfo[key].to);
     }
 
     /// @dev Add a new oracle
@@ -262,17 +261,17 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @dev Get wallet balance for specific wallet
-    /// @param to Wallet to query balance for
+    /// @param key The key to check the Transaction struct info
     /// @return Token amount
-    function getWalletBalance(address to) external returns (uint256) {
-        return tokenInfo[to].amount;
+    function getWalletBalance(bytes32 key) external returns (uint256) {
+        return tokenInfo[key].amount;
     }
 
     /// @dev Get approval status for specific wallet
-    /// @param to Wallet to query approval for
-    /// @return Token amount
-    function getApprovalStatus(address to) external returns (bool) {
-        return tokenInfo[to].approved;
+    /// @param key The key to check the Transaction struct info
+    /// @return Approval status
+    function getApprovalStatus(bytes32 key) external returns (bool) {
+        return tokenInfo[key].approved;
     }
 
     /// @dev Hash the transaction information for reads
@@ -285,7 +284,7 @@ contract CypherEscrow is ReentrancyGuard {
         address to,
         address asset,
         uint256 amount
-    ) public pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(from, to, asset, amount));
     }
 }
