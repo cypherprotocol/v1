@@ -78,12 +78,12 @@ contract CypherEscrow is ReentrancyGuard {
         // check if the stop has been overwritten by protocol owner on the frontend
         if (msg.sender != sourceContract) revert NotSourceContract();
 
+        uint256 amount = msg.value;
+
         // create key hash for tokenInfo mapping
         bytes32 key = hashTransactionKey(from, to, address(0), amount);
 
         Transaction memory txInfo = tokenInfo[key];
-
-        uint256 amount = msg.value;
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[from] == true) {
@@ -132,7 +132,7 @@ contract CypherEscrow is ReentrancyGuard {
             addToLimiter(key, from, to, asset, amount);
         } else {
             // check if they have been approved
-            if (tokenInfo[msg.sender].approved != true) revert NotApproved();
+            if (tokenInfo[key].approved != true) revert NotApproved();
 
             // if so, allow them to withdraw the full amount
             bool result = IERC20(asset).transferFrom(asset, to, amount);
@@ -236,11 +236,10 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Approve a withdraw to a user
     /// @param key The key to check the Transaction struct info
-    /// @param to The address to approve to
     function approveWithdraw(bytes32 key) external onlyOracle {
         tokenInfo[key].approved = true;
 
-        emit WithdrawApproved(msg.sender, tokenInfo[key].to);
+        emit WithdrawApproved(msg.sender, tokenInfo[key].destination);
     }
 
     /// @notice Disapprove a withdraw to a user
@@ -248,7 +247,7 @@ contract CypherEscrow is ReentrancyGuard {
     function disapproveWithdraw(bytes32 key) external onlyOracle {
         tokenInfo[key].approved = false;
 
-        emit WithdrawDisapproved(msg.sender, tokenInfo[key].to);
+        emit WithdrawDisapproved(msg.sender, tokenInfo[key].destination);
     }
 
     /// @dev Add a new oracle
