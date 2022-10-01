@@ -8,7 +8,6 @@ contract CypherRegistry {
     event EscrowCreated(
         address indexed escrow,
         address indexed protocol,
-        uint256 chainId,
         address token,
         uint256 tokenThreshold,
         uint256 timeLimit,
