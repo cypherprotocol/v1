@@ -40,7 +40,6 @@ contract CypherVaultERC20Test is BaseCypherTest {
         // Deposit ERC20 into contract protected by Cypher
         vm.startPrank(bob);
         safeMockRari.depositTokens(100);
-        vm.stopPrank();
 
         // address[] memory whales = new address[](1);
         // whales[0] = whale;
@@ -56,14 +55,17 @@ contract CypherVaultERC20Test is BaseCypherTest {
 
         // deploy mockk Rari contracts with eth (to mimic a pool)
         mockRari = new MockRari(address(token1));
-        // send eth to mock Rari contract
+        attackTokenContract = new AttackToken(address(token1), payable(address(mockRari)));
+        vm.stopPrank();
+
+        _supplyAdditionalBalance();
     }
 
-    function supplyAdditionalBalance() internal {
-        vm.startPrank(carol);
-
+    function _supplyAdditionalBalance() internal {
         _grantApprovals(carol, address(safeMockRari));
         _grantApprovals(carol, address(mockRari));
+
+        vm.startPrank(carol);
 
         mockRari.depositTokens(100);
         safeMockRari.depositTokens(100);
@@ -83,19 +85,21 @@ contract CypherVaultERC20Test is BaseCypherTest {
     }
 
     // deposit ERC20 as collateral (can be USDC), get ETH back
-    function testHackToken() public {
+    function testDrainRariWithERC20Collateral() public {
         vm.startPrank(bob);
 
-        attackTokenContract = new AttackToken(address(token1), payable(address(mockRari)));
+        token1.transfer(address(attackTokenContract), 1 ether);
 
-        token1.mint(address(attackTokenContract), 100 ether);
-        assertEq(token1.balanceOf(address(attackTokenContract)), 100 ether);
+        // // attack the contract by:
+        // // 1. depositing tokens
+        // // 2. reentering on the borrow
 
-        // attack the contract by:
-        // 1. depositing tokens
-        // 2. reentering on the borrow
+        uint256 balanceBefore = address(bob).balance;
         attackTokenContract.attackRari(1 ether);
-        assertEq(address(bob).balance, uint128(MAX_INT) + 100 ether);
+        assertEq(address(bob).balance, balanceBefore + 100 ether);
+
+        emit log(unicode"✅ Deployed test token contracts");
+
         vm.stopPrank();
     }
 
