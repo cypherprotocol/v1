@@ -13,7 +13,7 @@ contract DAOWallet is Test {
         ethBalances[msg.sender] += (msg.value);
     }
 
-    function deposit(address token, uint256 amount) public {
+    function depositTokens(address token, uint256 amount) public {
         ERC20(token).transferFrom(msg.sender, address(this), amount);
         balances[msg.sender] += amount;
     }

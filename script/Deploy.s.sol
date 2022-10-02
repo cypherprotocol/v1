@@ -4,7 +4,7 @@ pragma solidity ^0.8.15;
 import {Script} from "forge-std/Script.sol";
 
 import {CypherRegistry} from "../src/CypherRegistry.sol";
-import {SafeDAOWallet} from "../test/exploits/SafeDAOWallet.sol";
+import {SafeDAOWallet} from "../test/mocks/SafeDAOWallet.sol";
 import {MockERC20} from "../test/mocks/MockERC20.sol";
 
 /// @notice A very simple deployment script
