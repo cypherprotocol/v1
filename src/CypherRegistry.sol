@@ -13,6 +13,7 @@ contract CypherRegistry {
         uint256 timeLimit,
         address[] oracles
     );
+    event EscrowAttached(address indexed escrow, address indexed protocol);
 
     mapping(address => CypherEscrow) public getEscrowForProtocol;
 
@@ -44,7 +45,10 @@ contract CypherRegistry {
         return address(escrow);
     }
 
-    function assignEscrow(address protocol, address escrow) public architectOnly(protocol) {
+    /// @dev Assigns an existing escrow to a protocol
+    function attachEscrow(address escrow, address protocol) public architectOnly(protocol) {
         getEscrowForProtocol[protocol] = CypherEscrow(escrow);
+
+        emit EscrowAttached(escrow, protocol);
     }
 }
