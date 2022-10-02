@@ -32,10 +32,16 @@ contract CypherEscrow is ReentrancyGuard {
         uint256 amount;
     }
 
-    event AmountSent(address indexed from, address indexed to, address tokenContract, uint256 amount);
-    event AmountStopped(address indexed from, address indexed to, address tokenContract, uint256 amount);
-    event TransactionAccepted(address indexed from, address indexed to, address tokenContract, uint256 amount);
-    event TransactionDenied(address indexed from, address indexed to, address tokenContract, uint256 amount);
+    event AmountSent(address indexed from, address indexed to, address tokenContract, uint256 amount, uint256 counter);
+    event AmountStopped(
+        address indexed from,
+        address indexed to,
+        address tokenContract,
+        uint256 amount,
+        uint256 counter
+    );
+    event TransactionAccepted(bytes32 key);
+    event TransactionDenied(bytes32 key);
     event OracleAdded(address indexed user, address oracle);
     event TimeLimitSet(uint256 timeLimit);
     event AddressAddedToWhitelist(address indexed user, address whitelist);
@@ -136,9 +142,7 @@ contract CypherEscrow is ReentrancyGuard {
         getTransactionInfo[key].asset = _tokenContract;
         getTransactionInfo[key].amount = _amount;
 
-        getCounterForOrigin[_from] += 1;
-
-        emit AmountStopped(_from, _to, _tokenContract, _amount);
+        emit AmountStopped(_from, _to, _tokenContract, _amount, getCounterForOrigin[_from] += 1);
     }
 
     /// @notice Send approved funds to a user
@@ -159,7 +163,7 @@ contract CypherEscrow is ReentrancyGuard {
 
         delete getTransactionInfo[key];
 
-        emit TransactionAccepted(txInfo.origin, txInfo.destination, txInfo.asset, txInfo.amount);
+        emit TransactionAccepted(key);
     }
 
     /// @notice Sends the funds back to the protocol- needs to be after they have fixed the exploit
@@ -181,7 +185,7 @@ contract CypherEscrow is ReentrancyGuard {
 
         delete getTransactionInfo[key];
 
-        emit TransactionDenied(txInfo.origin, txInfo.destination, txInfo.asset, txInfo.amount);
+        emit TransactionDenied(key);
     }
 
     /// @notice Set the timelimit for the tx before reverting
