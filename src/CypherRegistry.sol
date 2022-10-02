@@ -19,7 +19,7 @@ contract CypherRegistry {
     constructor() {}
 
     modifier architectOnly(address protocol) {
-        require(ICypherProtocol(protocol).getArchitect() == msg.sender);
+        require(ICypherProtocol(protocol).getArchitect() == msg.sender, "ok");
         _;
     }
 

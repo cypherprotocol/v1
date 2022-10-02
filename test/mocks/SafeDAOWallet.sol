@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
-import {IERC20} from "../../src/interfaces/IERC20.sol";
+
+import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ICypherEscrow} from "../../src/interfaces/ICypherEscrow.sol";
 import {CypherProtocol} from "../../src/CypherProtocol.sol";
 
@@ -17,7 +18,7 @@ contract SafeDAOWallet is CypherProtocol, Test {
     }
 
     function depositTokens(address token, uint256 amount) public {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        ERC20(token).transferFrom(msg.sender, address(this), amount);
         balances[msg.sender] += amount;
     }
 
@@ -43,7 +44,7 @@ contract SafeDAOWallet is CypherProtocol, Test {
         require(balances[msg.sender] >= _amount, "INSUFFICIENT_FUNDS");
 
         ICypherEscrow escrow = ICypherEscrow(getEscrow());
-        IERC20(token).approve(address(escrow), _amount);
+        ERC20(token).approve(address(escrow), _amount);
         escrow.escrowTokens(address(this), msg.sender, token, _amount);
 
         balances[msg.sender] -= _amount;
