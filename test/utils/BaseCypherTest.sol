@@ -27,8 +27,8 @@ contract BaseCypherTest is Test {
     address[] oracles;
 
     function setUp() public virtual {
-        vm.label(alice, "alice: user1");
-        vm.label(bob, "bob: user2");
+        vm.label(alice, "alice: non-cypher user");
+        vm.label(bob, "bob: cypher user");
         vm.label(carol, "carol: oracle");
         vm.label(dave, "dave: architect");
         vm.label(address(this), "testContract");
@@ -86,7 +86,7 @@ contract BaseCypherTest is Test {
 
     function _assignEscrowAsArchitect(address _contract) internal {
         vm.startPrank(dave);
-        registry.assignEscrow(_contract, address(escrow));
+        registry.attachEscrow(address(escrow), _contract);
         vm.stopPrank();
 
         emit log_named_address(unicode"✅ Assigned escrow to", _contract);

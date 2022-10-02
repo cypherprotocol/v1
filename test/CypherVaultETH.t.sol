@@ -8,44 +8,54 @@ import {BaseCypherTest} from "./utils/BaseCypherTest.sol";
 import {Attack} from "./exploits/ETHReentrancy/Attack.sol";
 import {DAOWallet} from "./mocks/DAOWallet.sol";
 import {SafeDAOWallet} from "./mocks/SafeDAOWallet.sol";
-import {MockERC20} from "./mocks/MockERC20.sol";
 
 contract CypherVaultETHTest is BaseCypherTest {
     Attack attackContract;
-    DAOWallet vulnerableContract;
 
-    SafeDAOWallet safeWallet;
+    DAOWallet unsafeContract;
+    SafeDAOWallet safeContract;
 
     function setUp() public virtual override {
         super.setUp();
 
-        vm.prank(carol);
-        vulnerableContract = new DAOWallet();
+        unsafeContract = new DAOWallet();
+        safeContract = new SafeDAOWallet(dave, address(registry));
+        _assignEscrowAsArchitect(address(safeContract));
 
-        // Deposit ETH into non-Cypher, vulnerable contract
-        vm.startPrank(alice);
-        vulnerableContract.deposit{value: 100}();
-        vm.stopPrank();
-
-        safeWallet = new SafeDAOWallet(dave, address(registry));
-
-        _assignEscrowAsArchitect(address(safeWallet));
+        // Deposit ETH from non-cypher user into vulnerable contract
+        vm.prank(alice);
+        unsafeContract.deposit{value: 100}();
 
         // Deposit ETH into contract protected by Cypher
+        vm.prank(bob);
+        safeContract.deposit{value: 100}();
+    }
+
+    function testBalances() public {
+        assertEq(address(unsafeContract).balance, 100);
+        assertEq(address(safeContract).balance, 100);
+    }
+
+    function testAttackUnsafeContract() public {
         vm.startPrank(bob);
-        safeWallet.deposit{value: 100}();
+        uint256 balanceBefore = address(bob).balance;
+
+        attackContract = new Attack(payable(address(unsafeContract)));
+        attackContract.attack{value: 10}();
+        assertEq(address(unsafeContract).balance, 0);
+        assertEq(address(bob).balance, balanceBefore + 100);
         vm.stopPrank();
     }
 
     //////////////////////////// ETH ////////////////////////////
     // function testSetUpAttackETH() public {
     //     startHoax(hacker, 1 ether);
-    //     assertEq(address(vulnerableContract).balance, 100 ether);
+    //     assertEq(address(unsafeContract).balance, 100 ether);
 
-    //     attackContract = new Attack(payable(address(vulnerableContract)));
+    //     attackContract = new Attack(payable(address(unsafeContract)));
     //     attackContract.attack{value: 1 ether}();
 
-    //     assertEq(address(vulnerableContract).balance, 0);
+    //     assertEq(address(unsafeContract).balance, 0);
     //     assertEq(hacker.balance, 101 ether);
     //     vm.stopPrank();
     // }
