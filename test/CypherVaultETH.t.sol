@@ -162,57 +162,57 @@ contract CypherVaultETHTest is Test {
         vm.stopPrank();
     }
 
-    // function testETHWithdrawStoppedProtocolApproves() public {
-    //     startHoax(newWhale, 100);
-    //     assertEq(address(patchedContract).balance, 200);
-    //     // newWhale withdraws from patchContract
-    //     attackContract = new Attack(payable(address(patchedContract)));
-    //     // gets stopped, deposit and withdraw more than threshold
-    //     // TODO: make this a hack, not deposit
-    //     patchedContract.deposit{value: 65}();
-    //     patchedContract.withdrawETH();
+    function testETHWithdrawStoppedProtocolApproves() public {
+        startHoax(newWhale, 100);
+        assertEq(address(patchedContract).balance, 200);
+        // newWhale withdraws from patchContract
+        attackContract = new Attack(payable(address(patchedContract)));
+        // gets stopped, deposit and withdraw more than threshold
+        // TODO: make this a hack, not deposit
+        patchedContract.deposit{value: 65}();
+        patchedContract.withdrawETH();
 
-    //     // check to make sure he cannot withdraw on his own
-    //     assertEq(newWhale.balance, 35);
-    //     assertEq(escrow.getWalletBalance(newWhale), 65);
-    //     vm.stopPrank();
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), newWhale, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
 
-    //     // architect approves
-    //     startHoax(architect); // cypher EOA
-    //     escrow.approveWithdraw(newWhale);
-    //     escrow.releaseTokens(newWhale, address(0x0));
-    //     assertEq(newWhale.balance, 100);
-    // }
+        // check to make sure he cannot withdraw on his own
+        assertEq(newWhale.balance, 35);
+        assertEq(amount, 65);
+        vm.stopPrank();
 
-    // function testETHWithdrawStoppedProtocolDenies() public {
-    //     startHoax(hacker, 100);
-    //     assertEq(address(patchedContract).balance, 200);
-    //     // hacker withdraws from patchContract
-    //     attackContract = new Attack(payable(address(patchedContract)));
-    //     // gets stopped, deposit and withdraw more than threshold
-    //     // TODO: make this a hack, not deposit
-    //     patchedContract.deposit{value: 65}();
-    //     patchedContract.withdrawETH();
+        // architect approves
+        startHoax(architect); // cypher EOA
+        escrow.acceptTransaction(key);
+        assertEq(newWhale.balance, 100);
+    }
 
-    //     // check to make sure he cannot withdraw on his own
-    //     assertEq(hacker.balance, 35);
-    //     assertEq(escrow.getWalletBalance(hacker), 65);
-    //     vm.stopPrank();
+    function testETHWithdrawStoppedProtocolDenies() public {
+        startHoax(hacker, 100);
+        assertEq(address(patchedContract).balance, 200);
+        // hacker withdraws from patchContract
+        attackContract = new Attack(payable(address(patchedContract)));
+        // gets stopped, deposit and withdraw more than threshold
+        // TODO: make this a hack, not deposit
+        patchedContract.deposit{value: 65}();
+        patchedContract.withdrawETH();
 
-    //     // protocol approves
-    //     startHoax(architect);
-    //     bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
-    //     assertEq(approvalStatusBefore, false);
-    //     escrow.disapproveWithdraw(hacker);
-    //     bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
-    //     assertEq(approvalStatusAfter, false);
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), hacker, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
 
-    //     escrow.denyTransaction(hacker);
-    //     // protocol balance should get the funds back + hacker deposited funds
-    //     assertEq(address(patchedContract).balance, 265);
-    //     assertEq(hacker.balance, 35);
-    //     vm.stopPrank();
-    // }
+        // check to make sure he cannot withdraw on his own
+        assertEq(hacker.balance, 35);
+        assertEq(amount, 65);
+        vm.stopPrank();
+
+        // protocol approves
+        startHoax(architect);
+
+        escrow.denyTransaction(key);
+        // protocol balance should get the funds back + hacker deposited funds
+        assertEq(address(patchedContract).balance, 265);
+        assertEq(hacker.balance, 35);
+        vm.stopPrank();
+    }
 
     /* CONTRACTS */
     // CypherEscrow
