@@ -116,21 +116,21 @@ contract CypherVaultETHTest is Test {
         // when pulling over threshold, it works. not less than
         startHoax(newWhale, 100);
         assertEq(address(patchedContract).balance, 200);
-        // whale withdraws from patchContract
-        attackContract = new Attack(payable(address(patchedContract)));
         // gets stopped, deposit and withdraw more than threshold
         patchedContract.deposit{value: 65}();
         patchedContract.withdrawETH();
 
         // check to make sure he cannot withdraw on his own
         assertEq(newWhale.balance, 35);
-        assertEq(escrow.getWalletBalance(newWhale), 65);
+
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), newWhale, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 65);
         vm.stopPrank();
 
         // cypher team releases
         startHoax(cypher); // cypher EOA
-        escrow.approveWithdraw(newWhale);
-        escrow.releaseTokens(newWhale, address(0x0));
+        escrow.acceptTransaction(key);
         assertEq(newWhale.balance, 100);
     }
 
@@ -145,20 +145,17 @@ contract CypherVaultETHTest is Test {
         patchedContract.withdrawETH();
 
         // check to make sure he cannot withdraw on his own
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), hacker, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+
         assertEq(hacker.balance, 35);
-        assertEq(escrow.getWalletBalance(hacker), 65);
+        assertEq(amount, 65);
         vm.stopPrank();
 
         // cypher team denies
         startHoax(cypher); // cypher EOA
 
-        bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
-        assertEq(approvalStatusBefore, false);
-        escrow.disapproveWithdraw(hacker);
-        bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
-        assertEq(approvalStatusAfter, false);
-
-        escrow.denyTransaction(hacker);
+        escrow.denyTransaction(key);
         // protocol balance should get the funds back + hacker deposited funds
         assertEq(address(patchedContract).balance, 265);
         assertEq(hacker.balance, 35);
@@ -175,15 +172,17 @@ contract CypherVaultETHTest is Test {
         patchedContract.deposit{value: 65}();
         patchedContract.withdrawETH();
 
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), newWhale, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+
         // check to make sure he cannot withdraw on his own
         assertEq(newWhale.balance, 35);
-        assertEq(escrow.getWalletBalance(newWhale), 65);
+        assertEq(amount, 65);
         vm.stopPrank();
 
         // architect approves
         startHoax(architect); // cypher EOA
-        escrow.approveWithdraw(newWhale);
-        escrow.releaseTokens(newWhale, address(0x0));
+        escrow.acceptTransaction(key);
         assertEq(newWhale.balance, 100);
     }
 
@@ -197,20 +196,18 @@ contract CypherVaultETHTest is Test {
         patchedContract.deposit{value: 65}();
         patchedContract.withdrawETH();
 
+        bytes32 key = keccak256(abi.encodePacked(address(patchedContract), hacker, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+
         // check to make sure he cannot withdraw on his own
         assertEq(hacker.balance, 35);
-        assertEq(escrow.getWalletBalance(hacker), 65);
+        assertEq(amount, 65);
         vm.stopPrank();
 
         // protocol approves
         startHoax(architect);
-        bool approvalStatusBefore = escrow.getApprovalStatus(hacker);
-        assertEq(approvalStatusBefore, false);
-        escrow.disapproveWithdraw(hacker);
-        bool approvalStatusAfter = escrow.getApprovalStatus(hacker);
-        assertEq(approvalStatusAfter, false);
 
-        escrow.denyTransaction(hacker);
+        escrow.denyTransaction(key);
         // protocol balance should get the funds back + hacker deposited funds
         assertEq(address(patchedContract).balance, 265);
         assertEq(hacker.balance, 35);

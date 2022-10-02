@@ -36,7 +36,7 @@ contract CypherRegistry {
         uint256 timeLimit,
         address[] memory oracles
     ) public architectOnly(protocol) returns (address) {
-        CypherEscrow escrow = new CypherEscrow(protocol, token, tokenThreshold, timeLimit, oracles);
+        CypherEscrow escrow = new CypherEscrow(token, tokenThreshold, timeLimit, oracles);
         getEscrowForProtocol[protocol] = escrow;
 
         emit EscrowCreated(address(escrow), protocol, token, tokenThreshold, timeLimit, oracles);
