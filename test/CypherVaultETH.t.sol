@@ -8,6 +8,7 @@ import {BaseCypherTest} from "./utils/BaseCypherTest.sol";
 import {Attack} from "./exploits/ETHReentrancy/Attack.sol";
 import {DAOWallet} from "./mocks/DAOWallet.sol";
 import {SafeDAOWallet} from "./mocks/SafeDAOWallet.sol";
+import {CypherEscrow} from "../src/CypherEscrow.sol";
 
 contract CypherVaultETHTest is BaseCypherTest {
     Attack attackContract;
@@ -43,6 +44,120 @@ contract CypherVaultETHTest is BaseCypherTest {
         attackContract = new Attack(payable(address(unsafeContract)));
         attackContract.attack{value: 10}();
         assertEq(address(unsafeContract).balance, 0);
+        assertEq(address(bob).balance, balanceBefore + 100);
+        vm.stopPrank();
+    }
+
+    function testTransactionStoppedByEscrow() public {
+        vm.startPrank(bob);
+
+        assertEq(safeContract.balanceOf(bob), 100);
+        safeContract.withdrawETH();
+
+        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 100);
+
+        vm.stopPrank();
+    }
+
+    function testTransactionStoppedByEscrowOracleAccepts() public {
+        vm.startPrank(bob);
+
+        assertEq(safeContract.balanceOf(bob), 100);
+        safeContract.withdrawETH();
+
+        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 100);
+
+        vm.stopPrank();
+
+        uint256 balanceBefore = address(bob).balance;
+
+        vm.startPrank(carol);
+        escrow.acceptTransaction(key);
+        vm.stopPrank();
+
+        assertEq(address(bob).balance, balanceBefore + 100);
+    }
+
+    function testTransactionStoppedByEscrowOracleDenies() public {
+        vm.startPrank(bob);
+
+        assertEq(safeContract.balanceOf(bob), 100);
+        safeContract.withdrawETH();
+
+        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 100);
+
+        vm.stopPrank();
+
+        uint256 balanceBefore = address(bob).balance;
+        uint256 contractBalanceBefore = address(safeContract).balance;
+
+        vm.startPrank(carol);
+        escrow.denyTransaction(key);
+        vm.stopPrank();
+
+        assertEq(address(bob).balance, balanceBefore);
+        assertEq(address(safeContract).balance, contractBalanceBefore);
+    }
+
+    function testCannotAcceptTransactionStoppedByEscrowWhenNonOracle() public {
+        vm.startPrank(bob);
+
+        assertEq(safeContract.balanceOf(bob), 100);
+        safeContract.withdrawETH();
+
+        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 100);
+
+        vm.stopPrank();
+
+        uint256 balanceBefore = address(bob).balance;
+        uint256 contractBalanceBefore = address(safeContract).balance;
+
+        vm.startPrank(alice);
+        vm.expectRevert(CypherEscrow.NotOracle.selector);
+        escrow.acceptTransaction(key);
+    }
+
+    function testCannotDenyTransactionStoppedByEscrowWhenNonOracle() public {
+        vm.startPrank(bob);
+
+        assertEq(safeContract.balanceOf(bob), 100);
+        safeContract.withdrawETH();
+
+        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        (, uint256 amount) = escrow.getTransaction(key);
+        assertEq(amount, 100);
+
+        vm.stopPrank();
+
+        uint256 balanceBefore = address(bob).balance;
+        uint256 contractBalanceBefore = address(safeContract).balance;
+
+        vm.startPrank(alice);
+        vm.expectRevert(CypherEscrow.NotOracle.selector);
+        escrow.denyTransaction(key);
+    }
+
+    function testWhitelistBypassesEscrow() public {
+        vm.startPrank(carol);
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = bob;
+        escrow.addToWhitelist(whitelist);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        assertEq(safeContract.balanceOf(bob), 100);
+
+        uint256 balanceBefore = address(bob).balance;
+        safeContract.withdrawETH();
+
         assertEq(address(bob).balance, balanceBefore + 100);
         vm.stopPrank();
     }

@@ -6,12 +6,6 @@ import {IWETH9} from "./interfaces/IWETH9.sol";
 
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 
-error NotOracle();
-error NotValidAddress();
-error NotApproved();
-error MustBeDisapproved();
-error TransferFailed();
-
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 contract CypherEscrow is ReentrancyGuard {
@@ -45,6 +39,12 @@ contract CypherEscrow is ReentrancyGuard {
     event OracleAdded(address indexed user, address oracle);
     event TimeLimitSet(uint256 timeLimit);
     event AddressAddedToWhitelist(address indexed user, address whitelist);
+
+    error NotOracle();
+    error NotValidAddress();
+    error NotApproved();
+    error MustBeDisapproved();
+    error TransferFailed();
 
     modifier onlyOracle() {
         bool isAuthorized = isOracle[msg.sender];
