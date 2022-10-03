@@ -34,7 +34,7 @@ contract SafeDAOWallet is CypherProtocol, Test {
         require(ethBalances[msg.sender] >= 0, "INSUFFICIENT_FUNDS");
 
         ICypherEscrow escrow = ICypherEscrow(getEscrow());
-        escrow.escrowETH{value: ethBalances[msg.sender]}(address(this), msg.sender);
+        escrow.escrowETH{value: ethBalances[msg.sender]}(msg.sender, msg.sender);
 
         ethBalances[msg.sender] = 0;
     }
