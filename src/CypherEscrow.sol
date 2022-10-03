@@ -32,8 +32,9 @@ contract CypherEscrow is ReentrancyGuard {
         uint256 amount;
     }
 
-    event AmountSent(address indexed from, address indexed to, address tokenContract, uint256 amount, uint256 counter);
+    event AmountSent(bytes32 key, address indexed from, address indexed to, address tokenContract, uint256 amount, uint256 counter);
     event AmountStopped(
+        bytes32 key,
         address indexed from,
         address indexed to,
         address tokenContract,
@@ -142,7 +143,7 @@ contract CypherEscrow is ReentrancyGuard {
         getTransactionInfo[key].asset = _tokenContract;
         getTransactionInfo[key].amount = _amount;
 
-        emit AmountStopped(_from, _to, _tokenContract, _amount, getCounterForOrigin[_from] += 1);
+        emit AmountStopped(key, _from, _to, _tokenContract, _amount, getCounterForOrigin[_from] += 1);
     }
 
     /// @notice Send approved funds to a user
