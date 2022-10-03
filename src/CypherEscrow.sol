@@ -88,7 +88,7 @@ contract CypherEscrow is ReentrancyGuard {
         Transaction memory txInfo = getTransactionInfo[key];
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
-        if (amount < tokenThreshold || isWhitelisted[from] == true) {
+        if (amount < tokenThreshold || isWhitelisted[from]) {
             (bool success, ) = address(to).call{value: amount}("");
 
             if (!success) revert TransferFailed();
@@ -180,7 +180,7 @@ contract CypherEscrow is ReentrancyGuard {
             /// TODO: this could be a potential exploit
             address token = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token).transferFrom(txInfo.destination, txInfo.origin, txInfo.amount);
+            bool result = IERC20(token).transferFrom(txInfo.origin, address(this), txInfo.amount);
         }
 
         delete getTransactionInfo[key];

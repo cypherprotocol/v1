@@ -85,6 +85,8 @@ contract CypherVaultETHTest is BaseCypherTest {
     function testTransactionStoppedByEscrowOracleDenies() public {
         vm.startPrank(bob);
 
+        uint256 contractBalanceBefore = address(safeContract).balance;
+
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
@@ -95,7 +97,6 @@ contract CypherVaultETHTest is BaseCypherTest {
         vm.stopPrank();
 
         uint256 balanceBefore = address(bob).balance;
-        uint256 contractBalanceBefore = address(safeContract).balance;
 
         vm.startPrank(carol);
         escrow.denyTransaction(key);
