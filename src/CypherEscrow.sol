@@ -27,15 +27,17 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice Withdraw request info
     struct Transaction {
         address origin;
-        address destination;
+        address protocol;
+        address dst;
         address asset;
         uint256 amount;
     }
 
-    event AmountSent(address indexed from, address indexed to, address tokenContract, uint256 amount, uint256 counter);
     event AmountStopped(
-        address indexed from,
-        address indexed to,
+        bytes32 key,
+        address indexed origin,
+        address indexed protocol,
+        address indexed dst,
         address tokenContract,
         uint256 amount,
         uint256 counter
@@ -74,75 +76,79 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @notice Check if an ETH withdraw is valid
-    /// @param to The address to withdraw to
-    function escrowETH(address from, address to) external payable nonReentrant {
+    /// @param origin The address of the user who initiated the withdraw
+    /// @param dst The address of the user who will receive the ETH
+    function escrowETH(address origin, address dst) external payable nonReentrant {
         // check if the stop has been overwritten by protocol owner on the frontend
         // if (msg.sender != sourceContract) revert NotSourceContract();
-        if (from == address(0) || to == address(0)) revert NotValidAddress();
+        if (origin == address(0) || dst == address(0)) revert NotValidAddress();
 
         uint256 amount = msg.value;
 
         // create key hash for getTransactionInfo mapping
-        bytes32 key = hashTransactionKey(from, to, getCounterForOrigin[from]);
+        bytes32 key = hashTransactionKey(origin, msg.sender, dst, getCounterForOrigin[origin]);
 
         Transaction memory txInfo = getTransactionInfo[key];
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
-        if (amount < tokenThreshold || isWhitelisted[from] == true) {
-            (bool success, ) = address(to).call{value: amount}("");
+        if (amount < tokenThreshold || isWhitelisted[dst]) {
+            (bool success, ) = address(dst).call{value: amount}("");
 
             if (!success) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
-            addToLimiter(key, from, to, address(0), amount);
+            addToLimiter(key, origin, msg.sender, dst, address(0), amount);
         }
     }
 
     /// @notice Check if an ERC20 withdraw is valid
-    /// @param to The address to withdraw to
+    /// @param origin The address of the user who initiated the withdraw
+    /// @param dst The address to transfer to
     /// @param asset The ERC20 token contract to withdraw from
     /// @param amount The amount to withdraw
     function escrowTokens(
-        address from,
-        address to,
+        address origin,
+        address dst,
         address asset,
         uint256 amount
     ) external {
         // check if the stop has been overwritten by protocol owner on the frontend
         // if (msg.sender != sourceContract) revert NotSourceContract();
-        if (from == address(0) || to == address(0)) revert NotValidAddress();
+        if (origin == address(0) || dst == address(0)) revert NotValidAddress();
 
         // create key hash for getTransactionInfo mapping
-        bytes32 key = hashTransactionKey(from, to, getCounterForOrigin[from]);
+        bytes32 key = hashTransactionKey(origin, msg.sender, dst, getCounterForOrigin[origin]);
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
-        if (amount < tokenThreshold || isWhitelisted[from] == true) {
-            bool result = IERC20(asset).transferFrom(from, to, amount);
+        if (amount < tokenThreshold || isWhitelisted[origin]) {
+            bool result = IERC20(asset).transferFrom(msg.sender, dst, amount);
             if (!result) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
-            bool result = IERC20(asset).transferFrom(from, address(this), amount);
-            addToLimiter(key, from, to, asset, amount);
+            bool result = IERC20(asset).transferFrom(msg.sender, address(this), amount);
+            addToLimiter(key, origin, msg.sender, dst, asset, amount);
         }
     }
 
     /// @notice Add a user to the limiter
     /// @param key The key to check the Transaction struct info
-    /// @param _from The address from to add to the limiter
-    /// @param _to The address to add to the limiter
-    /// @param _tokenContract The ERC20 token contract to add to the limiter (ETH is 0x00..00)
-    /// @param _amount The amount to add to the limiter
+    /// @param origin The address of the user who initiated the withdraw
+    /// @param protocol The address of the protocol to withdraw from
+    /// @param dst The address to transfer to
+    /// @param amount The amount to add to the limiter
     function addToLimiter(
         bytes32 key,
-        address _from,
-        address _to,
-        address _tokenContract,
-        uint256 _amount
+        address origin,
+        address protocol,
+        address dst,
+        address asset,
+        uint256 amount
     ) internal {
-        getTransactionInfo[key].origin = _from;
-        getTransactionInfo[key].destination = _to;
-        getTransactionInfo[key].asset = _tokenContract;
-        getTransactionInfo[key].amount = _amount;
+        getTransactionInfo[key].origin = origin;
+        getTransactionInfo[key].protocol = protocol;
+        getTransactionInfo[key].dst = dst;
+        getTransactionInfo[key].asset = asset;
+        getTransactionInfo[key].amount = amount;
 
-        emit AmountStopped(_from, _to, _tokenContract, _amount, getCounterForOrigin[_from] += 1);
+        emit AmountStopped(key, origin, protocol, dst, asset, amount, getCounterForOrigin[origin] += 1);
     }
 
     /// @notice Send approved funds to a user
@@ -150,14 +156,16 @@ contract CypherEscrow is ReentrancyGuard {
     function acceptTransaction(bytes32 key) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
+        if (txInfo.origin == address(0)) revert NotValidAddress();
+
         uint256 amount = txInfo.amount;
 
         if (txInfo.asset == address(0x0)) {
-            (bool success, ) = address(txInfo.destination).call{value: amount}("");
+            (bool success, ) = address(txInfo.dst).call{value: amount}("");
             if (!success) revert TransferFailed();
         } else {
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(txInfo.asset).transferFrom(address(this), txInfo.destination, txInfo.amount);
+            bool result = IERC20(txInfo.asset).transferFrom(address(this), txInfo.dst, txInfo.amount);
             if (!result) revert TransferFailed();
         }
 
@@ -168,19 +176,20 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Sends the funds back to the protocol- needs to be after they have fixed the exploit
     /// @param key The key to check the Transaction struct info
-    function denyTransaction(bytes32 key) external onlyOracle nonReentrant {
+    /// @param to Address to redirect the funds to (in case protocol is compromised or cannot handle the funds)
+    function denyTransaction(bytes32 key, address to) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
         // Send ETH back
         if (txInfo.asset == address(0x0)) {
-            (bool success, ) = address(txInfo.origin).call{value: txInfo.amount}("");
+            (bool success, ) = address(to).call{value: txInfo.amount}("");
             if (!success) revert TransferFailed();
         } else {
             // Send ERC20 back
             /// TODO: this could be a potential exploit
             address token = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token).transferFrom(txInfo.destination, txInfo.origin, txInfo.amount);
+            bool result = IERC20(token).transferFrom(address(this), to, txInfo.amount);
         }
 
         delete getTransactionInfo[key];
@@ -224,13 +233,15 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /// @dev Hash the transaction information for reads
-    /// @param from The address to grab from
-    /// @param to The address to send to
+    /// @param origin Origin caller
+    /// @param protocol The protocol to grab fund from
+    /// @param dst The address to send to
     function hashTransactionKey(
-        address from,
-        address to,
+        address origin,
+        address protocol,
+        address dst,
         uint256 counter
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(from, to, counter));
+        return keccak256(abi.encodePacked(origin, protocol, dst, counter));
     }
 }

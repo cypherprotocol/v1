@@ -54,7 +54,7 @@ contract CypherVaultETHTest is BaseCypherTest {
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
-        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        bytes32 key = keccak256(abi.encodePacked(bob, address(safeContract), bob, uint256(0)));
         (, uint256 amount) = escrow.getTransaction(key);
         assertEq(amount, 100);
 
@@ -67,7 +67,7 @@ contract CypherVaultETHTest is BaseCypherTest {
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
-        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        bytes32 key = keccak256(abi.encodePacked(bob, address(safeContract), bob, uint256(0)));
         (, uint256 amount) = escrow.getTransaction(key);
         assertEq(amount, 100);
 
@@ -85,20 +85,21 @@ contract CypherVaultETHTest is BaseCypherTest {
     function testTransactionStoppedByEscrowOracleDenies() public {
         vm.startPrank(bob);
 
+        uint256 contractBalanceBefore = address(safeContract).balance;
+
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
-        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        bytes32 key = keccak256(abi.encodePacked(bob, address(safeContract), bob, uint256(0)));
         (, uint256 amount) = escrow.getTransaction(key);
         assertEq(amount, 100);
 
         vm.stopPrank();
 
         uint256 balanceBefore = address(bob).balance;
-        uint256 contractBalanceBefore = address(safeContract).balance;
 
         vm.startPrank(carol);
-        escrow.denyTransaction(key);
+        escrow.denyTransaction(key, address(safeContract));
         vm.stopPrank();
 
         assertEq(address(bob).balance, balanceBefore);
@@ -111,7 +112,7 @@ contract CypherVaultETHTest is BaseCypherTest {
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
-        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        bytes32 key = keccak256(abi.encodePacked(bob, address(safeContract), bob, uint256(0)));
         (, uint256 amount) = escrow.getTransaction(key);
         assertEq(amount, 100);
 
@@ -131,7 +132,7 @@ contract CypherVaultETHTest is BaseCypherTest {
         assertEq(safeContract.balanceOf(bob), 100);
         safeContract.withdrawETH();
 
-        bytes32 key = keccak256(abi.encodePacked(address(safeContract), bob, uint256(0)));
+        bytes32 key = keccak256(abi.encodePacked(bob, address(safeContract), bob, uint256(0)));
         (, uint256 amount) = escrow.getTransaction(key);
         assertEq(amount, 100);
 
@@ -142,7 +143,7 @@ contract CypherVaultETHTest is BaseCypherTest {
 
         vm.startPrank(alice);
         vm.expectRevert(CypherEscrow.NotOracle.selector);
-        escrow.denyTransaction(key);
+        escrow.denyTransaction(key, alice);
     }
 
     function testWhitelistBypassesEscrow() public {
