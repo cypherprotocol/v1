@@ -32,7 +32,6 @@ contract CypherEscrow is ReentrancyGuard {
         uint256 amount;
     }
 
-    event AmountSent(bytes32 key, address indexed from, address indexed to, address tokenContract, uint256 amount, uint256 counter);
     event AmountStopped(
         bytes32 key,
         address indexed from,
