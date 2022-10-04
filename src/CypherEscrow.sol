@@ -88,12 +88,9 @@ contract CypherEscrow is ReentrancyGuard {
         // create key hash for getTransactionInfo mapping
         bytes32 key = hashTransactionKey(origin, msg.sender, dst, getCounterForOrigin[origin]);
 
-        Transaction memory txInfo = getTransactionInfo[key];
-
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[dst]) {
             (bool success, ) = address(dst).call{value: amount}("");
-
             if (!success) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
             addToLimiter(key, origin, msg.sender, dst, address(0), amount);
@@ -124,6 +121,7 @@ contract CypherEscrow is ReentrancyGuard {
             if (!result) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
             bool result = IERC20(asset).transferFrom(msg.sender, address(this), amount);
+            if (!result) revert TransferFailed();
             addToLimiter(key, origin, msg.sender, dst, asset, amount);
         }
     }
@@ -189,9 +187,10 @@ contract CypherEscrow is ReentrancyGuard {
         } else {
             // Send ERC20 back
             /// TODO: this could be a potential exploit
-            address token = txInfo.asset;
+            address token_ = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token).transferFrom(address(this), to, txInfo.amount);
+            bool result = IERC20(token_).transferFrom(address(this), to, txInfo.amount);
+            if (!result) revert TransferFailed();
         }
 
         emit TransactionDenied(key);
@@ -227,7 +226,7 @@ contract CypherEscrow is ReentrancyGuard {
     /// @dev Get wallet balance for specific wallet
     /// @param key The key to check the Transaction struct info
     /// @return Token amount
-    function getTransaction(bytes32 key) external returns (address, uint256) {
+    function getTransaction(bytes32 key) external view returns (address, uint256) {
         Transaction memory txn = getTransactionInfo[key];
         return (txn.asset, txn.amount);
     }
