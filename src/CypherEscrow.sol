@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH9} from "./interfaces/IWETH9.sol";
 
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "./utils/ReentrancyGuard.sol";
 
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
@@ -88,12 +88,9 @@ contract CypherEscrow is ReentrancyGuard {
         // create key hash for getTransactionInfo mapping
         bytes32 key = hashTransactionKey(origin, msg.sender, dst, getCounterForOrigin[origin]);
 
-        Transaction memory txInfo = getTransactionInfo[key];
-
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[dst]) {
             (bool success, ) = address(dst).call{value: amount}("");
-
             if (!success) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
             addToLimiter(key, origin, msg.sender, dst, address(0), amount);
@@ -124,6 +121,7 @@ contract CypherEscrow is ReentrancyGuard {
             if (!result) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
             bool result = IERC20(asset).transferFrom(msg.sender, address(this), amount);
+            if (!result) revert TransferFailed();
             addToLimiter(key, origin, msg.sender, dst, asset, amount);
         }
     }
@@ -156,9 +154,8 @@ contract CypherEscrow is ReentrancyGuard {
     function acceptTransaction(bytes32 key) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
-        if (txInfo.origin == address(0)) revert NotValidAddress();
-
         uint256 amount = txInfo.amount;
+        delete getTransactionInfo[key];
 
         if (txInfo.asset == address(0x0)) {
             (bool success, ) = address(txInfo.dst).call{value: amount}("");
@@ -169,8 +166,6 @@ contract CypherEscrow is ReentrancyGuard {
             if (!result) revert TransferFailed();
         }
 
-        delete getTransactionInfo[key];
-
         emit TransactionAccepted(key);
     }
 
@@ -180,19 +175,19 @@ contract CypherEscrow is ReentrancyGuard {
     function denyTransaction(bytes32 key, address to) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
+        // update storage first to prevent reentrancy
+        delete getTransactionInfo[key];
+
         // Send ETH back
         if (txInfo.asset == address(0x0)) {
             (bool success, ) = address(to).call{value: txInfo.amount}("");
             if (!success) revert TransferFailed();
         } else {
             // Send ERC20 back
-            /// TODO: this could be a potential exploit
-            address token = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token).transferFrom(address(this), to, txInfo.amount);
+            bool result = IERC20(txInfo.asset).transferFrom(address(this), to, txInfo.amount);
+            if (!result) revert TransferFailed();
         }
-
-        delete getTransactionInfo[key];
 
         emit TransactionDenied(key);
     }
@@ -227,7 +222,7 @@ contract CypherEscrow is ReentrancyGuard {
     /// @dev Get wallet balance for specific wallet
     /// @param key The key to check the Transaction struct info
     /// @return Token amount
-    function getTransaction(bytes32 key) external returns (address, uint256) {
+    function getTransaction(bytes32 key) external view returns (address, uint256) {
         Transaction memory txn = getTransactionInfo[key];
         return (txn.asset, txn.amount);
     }

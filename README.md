@@ -4,9 +4,17 @@ Introducing Cypher, an on-chain security system to help prevent hacks. Integrate
 
 [Website](https://limiter-mu.vercel.app/)
 
-Deploy your contracts through our frontend with your custome parameters, and add these lines to your withdraw function:
+Deploy your contracts through our frontend with your custom parameters, extend our EscrowContract, and add these lines to your withdraw function:
 
+```solidity
+import {CypherProtocol} from "../../src/CypherProtocol.sol";
+
+contract MockProtocol is CypherProtocol {
+    constructor(address architect, address registry) CypherProtocol("MockProtocol", architect, registry) {}
+}
 ```
+
+```solidity
 ICypherEscrow escrow = ICypherEscrow(getEscrow());
 escrow.escrowETH{ value: ethBalances[msg.sender] }(msg.sender, msg.sender, 1);
 ```
