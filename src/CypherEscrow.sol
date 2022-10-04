@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IWETH9} from "./interfaces/IWETH9.sol";
 
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "./utils/ReentrancyGuard.sol";
 
 /// @author bmwoolf and zksoju
 /// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
@@ -159,6 +159,7 @@ contract CypherEscrow is ReentrancyGuard {
         if (txInfo.origin == address(0)) revert NotValidAddress();
 
         uint256 amount = txInfo.amount;
+        delete getTransactionInfo[key];
 
         if (txInfo.asset == address(0x0)) {
             (bool success, ) = address(txInfo.dst).call{value: amount}("");
@@ -169,8 +170,6 @@ contract CypherEscrow is ReentrancyGuard {
             if (!result) revert TransferFailed();
         }
 
-        delete getTransactionInfo[key];
-
         emit TransactionAccepted(key);
     }
 
@@ -179,6 +178,9 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param to Address to redirect the funds to (in case protocol is compromised or cannot handle the funds)
     function denyTransaction(bytes32 key, address to) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
+
+        // update storage first to prevent reentrancy
+        delete getTransactionInfo[key];
 
         // Send ETH back
         if (txInfo.asset == address(0x0)) {
@@ -191,8 +193,6 @@ contract CypherEscrow is ReentrancyGuard {
             /// @notice Our contract needs approval to swap tokens
             bool result = IERC20(token).transferFrom(address(this), to, txInfo.amount);
         }
-
-        delete getTransactionInfo[key];
 
         emit TransactionDenied(key);
     }
