@@ -184,10 +184,8 @@ contract CypherEscrow is ReentrancyGuard {
             if (!success) revert TransferFailed();
         } else {
             // Send ERC20 back
-            /// TODO: this could be a potential exploit
-            address token_ = txInfo.asset;
             /// @notice Our contract needs approval to swap tokens
-            bool result = IERC20(token_).transferFrom(address(this), to, txInfo.amount);
+            bool result = IERC20(txInfo.asset).transferFrom(address(this), to, txInfo.amount);
             if (!result) revert TransferFailed();
         }
 
