@@ -154,8 +154,6 @@ contract CypherEscrow is ReentrancyGuard {
     function acceptTransaction(bytes32 key) external onlyOracle nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
-        if (txInfo.origin == address(0)) revert NotValidAddress();
-
         uint256 amount = txInfo.amount;
         delete getTransactionInfo[key];
 
