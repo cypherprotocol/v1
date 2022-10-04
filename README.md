@@ -6,7 +6,7 @@ Introducing Cypher, an on-chain security system to help prevent hacks. Integrate
 
 Deploy your contracts through our frontend with your custome parameters, and add these lines to your withdraw function:
 
-```
+```solidity
 ICypherEscrow escrow = ICypherEscrow(getEscrow());
 escrow.escrowETH{ value: ethBalances[msg.sender] }(msg.sender, msg.sender, 1);
 ```
