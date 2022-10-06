@@ -23,4 +23,8 @@ abstract contract CypherProtocol {
     function getArchitect() external view returns (address) {
         return architect;
     }
+
+    function getProtocolName() external view returns (string memory) {
+        return protocolName;
+    }
 }
