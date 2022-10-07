@@ -55,20 +55,4 @@ contract CypherVaultERC20Test is BaseCypherTest {
 
     //     vm.stopPrank();
     // }
-
-    // function testCypher() public {
-    //     assertEq(address(mockRari).balance, 100 ether);
-    //     startHoax(hacker, 1 ether);
-    //     assertEq(hacker.balance, 1 ether);
-
-    //     attackTokenContract = new AttackToken(address(token), payable(address(safeMockRari)));
-    //     // rust stack times out if we do gwei
-    //     uint256 deposit = 1 ether;
-    //     // mint here since setUp is not working
-    //     token.mint(address(attackTokenContract), 1 ether);
-    //     assertEq(token.balanceOf(address(attackTokenContract)), 1 ether);
-    //     attackTokenContract.attackRari(deposit);
-    //     assertEq(hacker.balance, 1 ether);
-    //     vm.stopPrank();
-    // }
 }
