@@ -13,11 +13,8 @@ import {CypherEscrow} from "../src/CypherEscrow.sol";
 
 contract CypherEscrowRegistryTest is BaseCypherTest {
     function testRegistry() public {
-        assertEq(address(registry), address(registry));
-    }
-
-    function testEventEmitted() public {
-        // assert equal that the EscrowCreated event was emitted
-        // expectEmit(CreateEscrow);
+        BaseCypherTest._deployContracts();
+        BaseCypherTest._deployTestContracts();
+        // need to attach an escrow to the registry
     }
 }
