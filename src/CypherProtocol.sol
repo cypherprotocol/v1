@@ -1,10 +1,24 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
 import {CypherRegistry} from "./CypherRegistry.sol";
 
+/// @title Cypher Escrow Protocol
+/// @author bmwoolf
+/// @author zksoju
+/// @notice A skeleton for a protocol contract when creating a new escrow
 abstract contract CypherProtocol {
+
+    /*//////////////////////////////////////////////////////////////
+                            PROTOCOL STATE
+    //////////////////////////////////////////////////////////////*/
+
     address registry;
     address architect;
     string protocolName;
+
+    /*//////////////////////////////////////////////////////////////
+                               CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
 
     constructor(
         string memory _protocolName,
@@ -15,6 +29,10 @@ abstract contract CypherProtocol {
         registry = _registry;
         protocolName = _protocolName;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                              GETTERS
+    //////////////////////////////////////////////////////////////*/
 
     function getEscrow() internal view returns (address) {
         return address(CypherRegistry(registry).getEscrowForProtocol(address(this)));

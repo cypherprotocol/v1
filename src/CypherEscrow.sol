@@ -6,22 +6,35 @@ import {IWETH9} from "./interfaces/IWETH9.sol";
 
 import {ReentrancyGuard} from "./utils/ReentrancyGuard.sol";
 
-/// @author bmwoolf and zksoju
-/// @title Rate limiter for smart contract withdrawals- much like the bank's rate limiter
+/// @title Cypher Escrow System
+/// @author bmwoolf
+/// @author zksoju
+/// @notice Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 contract CypherEscrow is ReentrancyGuard {
-    mapping(address => bool) isOracle;
 
+    /*//////////////////////////////////////////////////////////////
+                            ESCROW STATE
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice The address of the token being stored in the escrow
     address public token;
 
+    /// @notice The amount of tokens that will create an escrow
     uint256 public tokenThreshold;
+
+    /// @notice The amount of time before the funds can be released if no response from the oracles
     uint256 public timeLimit;
-    uint256 public timePeriod;
+
+    /// @notice Allowed oracle addresses to sign off on escrowed transactions
+    mapping(address => bool) isOracle;
 
     /// @notice Whales that are whitelisted to withdraw without rate limiting
     mapping(address => bool) public isWhitelisted;
+
     /// @notice Request info mapping
     mapping(bytes32 => Transaction) public getTransactionInfo;
 
+    /// @notice The counter for the source contract
     mapping(address => uint256) public getCounterForOrigin;
 
     /// @notice Withdraw request info
@@ -32,6 +45,10 @@ contract CypherEscrow is ReentrancyGuard {
         address asset;
         uint256 amount;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                                EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     event AmountStopped(
         bytes32 key,
@@ -48,17 +65,29 @@ contract CypherEscrow is ReentrancyGuard {
     event TimeLimitSet(uint256 timeLimit);
     event AddressAddedToWhitelist(address indexed user, address whitelist);
 
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
     error NotOracle();
     error NotValidAddress();
     error NotApproved();
     error MustBeDisapproved();
     error TransferFailed();
 
+    /*//////////////////////////////////////////////////////////////
+                             MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
     modifier onlyOracle() {
         bool isAuthorized = isOracle[msg.sender];
         if (!isAuthorized) revert NotOracle();
         _;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                               CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
 
     constructor(
         address _token,
@@ -74,6 +103,10 @@ contract CypherEscrow is ReentrancyGuard {
             isOracle[_oracles[i]] = true;
         }
     }
+
+    /*//////////////////////////////////////////////////////////////
+                            ESCROW LOGIC
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice Check if an ETH withdraw is valid
     /// @param origin The address of the user who initiated the withdraw
@@ -149,6 +182,10 @@ contract CypherEscrow is ReentrancyGuard {
         emit AmountStopped(key, origin, protocol, dst, asset, amount, getCounterForOrigin[origin] += 1);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                          ORACLE AUTH LOGIC
+    //////////////////////////////////////////////////////////////*/
+
     /// @notice Send approved funds to a user
     /// @param key The key to check the Transaction struct info
     function acceptTransaction(bytes32 key) external onlyOracle nonReentrant {
@@ -192,6 +229,10 @@ contract CypherEscrow is ReentrancyGuard {
         emit TransactionDenied(key);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              SETTERS
+    //////////////////////////////////////////////////////////////*/
+
     /// @notice Set the timelimit for the tx before reverting
     /// @param _timeLimit The time limit in seconds
     function setTimeLimit(uint256 _timeLimit) external onlyOracle {
@@ -219,6 +260,10 @@ contract CypherEscrow is ReentrancyGuard {
         emit OracleAdded(msg.sender, _oracle);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              GETTERS
+    //////////////////////////////////////////////////////////////*/
+
     /// @dev Get wallet balance for specific wallet
     /// @param key The key to check the Transaction struct info
     /// @return Token amount
@@ -226,6 +271,10 @@ contract CypherEscrow is ReentrancyGuard {
         Transaction memory txn = getTransactionInfo[key];
         return (txn.asset, txn.amount);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                              UTILS
+    //////////////////////////////////////////////////////////////*/
 
     /// @dev Hash the transaction information for reads
     /// @param origin Origin caller
