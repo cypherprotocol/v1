@@ -11,7 +11,7 @@ import {DAOWallet} from "./mocks/DAOWallet.sol";
 import {SafeDAOWallet} from "./mocks/SafeDAOWallet.sol";
 import {CypherEscrow} from "../src/CypherEscrow.sol";
 
-contract CypherVaultRegistryTest is BaseCypherTest {
+contract CypherEscrowRegistryTest is BaseCypherTest {
     function testRegistry() public {
         assertEq(address(registry), address(registry));
     }

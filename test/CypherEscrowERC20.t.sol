@@ -8,7 +8,7 @@ import {BaseCypherTest} from "./utils/BaseCypherTest.sol";
 import {DAOWallet} from "./mocks/DAOWallet.sol";
 import {SafeDAOWallet} from "./mocks/SafeDAOWallet.sol";
 
-contract CypherVaultERC20Test is BaseCypherTest {
+contract CypherEscrowERC20Test is BaseCypherTest {
     DAOWallet unsafeContract;
     SafeDAOWallet safeContract;
 

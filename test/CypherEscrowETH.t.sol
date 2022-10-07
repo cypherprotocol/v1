@@ -10,7 +10,7 @@ import {DAOWallet} from "./mocks/DAOWallet.sol";
 import {SafeDAOWallet} from "./mocks/SafeDAOWallet.sol";
 import {CypherEscrow} from "../src/CypherEscrow.sol";
 
-contract CypherVaultETHTest is BaseCypherTest {
+contract CypherEscrowETHTest is BaseCypherTest {
     Attack attackContract;
 
     DAOWallet unsafeContract;
