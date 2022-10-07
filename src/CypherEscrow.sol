@@ -47,7 +47,7 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 EVENTS
+                                EVENTS
     //////////////////////////////////////////////////////////////*/
 
     event AmountStopped(
