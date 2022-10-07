@@ -73,8 +73,8 @@ src
 ├─ CypherProtocol — The interface for your contracts
 ├─ CypherRegistry — Database of all registered Cypher contracts
 test
-└─ CypherVault.t — Exhaustive tests for ETH based reentrancy hacks
-└─ CypherVaultERC20.t — Exhaustive tests for ERC20 based reentrancy hacks
+└─ CypherEscrow.t — Exhaustive tests for ETH based reentrancy hacks
+└─ CypherEscrowERC20.t — Exhaustive tests for ERC20 based reentrancy hacks
 ```
 
 ## Development

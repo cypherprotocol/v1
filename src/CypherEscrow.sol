@@ -46,10 +46,6 @@ contract CypherEscrow is ReentrancyGuard {
         uint256 amount;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
-
     event AmountStopped(
         bytes32 key,
         address indexed origin,
@@ -66,7 +62,7 @@ contract CypherEscrow is ReentrancyGuard {
     event AddressAddedToWhitelist(address indexed user, address whitelist);
 
     /*//////////////////////////////////////////////////////////////
-                                 ERRORS
+                                ERRORS
     //////////////////////////////////////////////////////////////*/
 
     error NotOracle();
