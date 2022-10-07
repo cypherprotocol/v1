@@ -11,7 +11,6 @@ import {ReentrancyGuard} from "./utils/ReentrancyGuard.sol";
 /// @author zksoju
 /// @notice Rate limiter for smart contract withdrawals- much like the bank's rate limiter
 contract CypherEscrow is ReentrancyGuard {
-
     /*//////////////////////////////////////////////////////////////
                             ESCROW STATE
     //////////////////////////////////////////////////////////////*/
@@ -45,6 +44,10 @@ contract CypherEscrow is ReentrancyGuard {
         address asset;
         uint256 amount;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                                EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     event AmountStopped(
         bytes32 key,

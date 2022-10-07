@@ -9,7 +9,6 @@ import {ICypherProtocol} from "./interfaces/ICypherProtocol.sol";
 /// @author zksoju
 /// @notice Registry for storing the escrows for a protocol
 contract CypherRegistry {
-
     /*//////////////////////////////////////////////////////////////
                             REGISTRY STATE
     //////////////////////////////////////////////////////////////*/
@@ -29,6 +28,12 @@ contract CypherRegistry {
         address[] oracles
     );
     event EscrowAttached(address indexed escrow, address indexed protocol);
+
+    /*//////////////////////////////////////////////////////////////
+                                EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    error ProtocolAlreadyRegistered();
 
     /*//////////////////////////////////////////////////////////////
                              MODIFIERS
@@ -62,6 +67,7 @@ contract CypherRegistry {
         uint256 timeLimit,
         address[] memory oracles
     ) public architectOnly(protocol) returns (address) {
+        if (getEscrowForProtocol[protocol] != CypherEscrow(address(0))) revert ProtocolAlreadyRegistered();
         CypherEscrow escrow = new CypherEscrow(token, tokenThreshold, timeLimit, oracles);
         getEscrowForProtocol[protocol] = escrow;
 
