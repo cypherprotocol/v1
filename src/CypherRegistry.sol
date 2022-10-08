@@ -16,7 +16,7 @@ contract CypherRegistry {
     mapping(address => CypherEscrow) public getEscrowForProtocol;
 
     /*//////////////////////////////////////////////////////////////
-                               EVENTS
+                            EVENTS
     //////////////////////////////////////////////////////////////*/
 
     event EscrowCreated(
@@ -30,7 +30,7 @@ contract CypherRegistry {
     event EscrowAttached(address indexed escrow, address indexed protocol);
 
     /*//////////////////////////////////////////////////////////////
-                                EVENTS
+                            ERRORS
     //////////////////////////////////////////////////////////////*/
 
     error ProtocolAlreadyRegistered();
