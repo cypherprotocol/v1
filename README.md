@@ -41,7 +41,25 @@ From there, select how you want to be communicated with:
 
 ## Testing hacks
 
-Exploit: `forge test -vv`
+1. fill out your own `.env` with these vars:
+
+```
+# RPC URL sourced by scripts
+RPC_URL=[enter_here]
+
+# The deployment private key sourced by scripts
+DEPLOYER_KEY=[enter_here]
+
+# Etherscan key for contract verification
+ETHERSCAN_KEY=[enter_here]
+```
+
+2. Enter this command to trigger Foundry's shell scripts: `bash utils/run_script.sh`
+3. Then, when it asks you for the command, enter one of these depending on what you want to test:
+   `Deploy`
+   `DeployProd`
+   `Mint`
+4. Check the chain!
 
 ## Checklist
 
