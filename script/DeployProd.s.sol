@@ -8,7 +8,7 @@ import {SafeDAOWallet} from "../test/mocks/SafeDAOWallet.sol";
 import {MockERC20} from "../test/mocks/MockERC20.sol";
 
 /// @notice A very simple deployment script
-contract Deploy is Script {
+contract DeployProd is Script {
     /// @notice The main script entrypoint
     /// @return cypherRegistry The deployed contract
     function run() external returns (CypherRegistry cypherRegistry) {
