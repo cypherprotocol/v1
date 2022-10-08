@@ -30,7 +30,7 @@ contract CypherRegistry {
     event EscrowAttached(address indexed escrow, address indexed protocol);
 
     /*//////////////////////////////////////////////////////////////
-                                EVENTS
+                                ERRORS
     //////////////////////////////////////////////////////////////*/
 
     error ProtocolAlreadyRegistered();
