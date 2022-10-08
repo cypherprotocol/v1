@@ -29,17 +29,17 @@ From there, select how you want to be communicated with:
 
 ## Features
 
-- [ ] Check against flashbots (MEV)
 - [x] Reentrancy protection mechanism
   - [x] ETH deposited reentrancy
   - [x] ERC20 deposited reentrancy
 - [x] Testing Suite
   - [x] ETH deposited reentrancy
   - [x] ERC20 deposited reentrancy
+- [ ] Check against flashbots (MEV)
 - [ ] onERC721Received
 - [ ] onERC1155Received
 
-## Testing hacks
+## Deploying contracts for tests
 
 1. fill out your own `.env` with these vars:
 
