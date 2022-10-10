@@ -7,7 +7,6 @@ import {CypherRegistry} from "./CypherRegistry.sol";
 /// @author zksoju
 /// @notice A skeleton for a protocol contract when creating a new escrow
 abstract contract CypherProtocol {
-
     /*//////////////////////////////////////////////////////////////
                             PROTOCOL STATE
     //////////////////////////////////////////////////////////////*/
@@ -15,6 +14,12 @@ abstract contract CypherProtocol {
     address registry;
     address architect;
     string protocolName;
+
+    /*//////////////////////////////////////////////////////////////
+                            EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event ProtocolCreated(address indexed registry, address indexed architect, string protocolName);
 
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
@@ -28,6 +33,8 @@ abstract contract CypherProtocol {
         architect = _architect;
         registry = _registry;
         protocolName = _protocolName;
+
+        emit ProtocolCreated(_registry, _architect, _protocolName);
     }
 
     /*//////////////////////////////////////////////////////////////
