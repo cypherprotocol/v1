@@ -14,10 +14,7 @@ contract DeployProd is Script {
     function run() external returns (CypherRegistry cypherRegistry) {
         vm.startBroadcast();
         MockERC20 mockERC20 = new MockERC20();
-        SafeDAOWallet daoWallet = new SafeDAOWallet(
-            address(msg.sender),
-            address(0xa5ca58d6b97c711f1fff656aaf7429a26a738186)
-        );
+        SafeDAOWallet daoWallet = new SafeDAOWallet(address(msg.sender), vm.envAddress("CYPHER_REGISTRY_ADDRESS"));
 
         vm.stopBroadcast();
     }
