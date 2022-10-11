@@ -43,6 +43,7 @@ contract CypherEscrow is ReentrancyGuard {
         address dst;
         address asset;
         uint256 amount;
+        uint256 blockNumber;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -111,6 +112,9 @@ contract CypherEscrow is ReentrancyGuard {
     /// @param origin The address of the user who initiated the withdraw
     /// @param dst The address of the user who will receive the ETH
     function escrowETH(address origin, address dst) external payable nonReentrant {
+        // prevent multi-hack under the radar
+        // check if it is in the same block && the sum of all recent tx's is greater than the specified amount
+        
         // check if the stop has been overwritten by protocol owner on the frontend
         // if (msg.sender != sourceContract) revert NotSourceContract();
         if (origin == address(0) || dst == address(0)) revert NotValidAddress();
@@ -122,6 +126,7 @@ contract CypherEscrow is ReentrancyGuard {
 
         // if they are whitelisted or amount is less than threshold, just transfer the tokens
         if (amount < tokenThreshold || isWhitelisted[dst]) {
+            // need to check if they have gone through before
             (bool success, ) = address(dst).call{value: amount}("");
             if (!success) revert TransferFailed();
         } else if (getTransactionInfo[key].origin == address(0)) {
