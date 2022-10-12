@@ -47,6 +47,28 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
+                              EXPERIMENT
+    //////////////////////////////////////////////////////////////*/
+    /*
+        Limits: 10,000 tokens per tx
+            1. hacker withdraws 2000 tokens in 5 transactions
+            2. hacker withdraws 5000 tokens in 2 transactions
+     */
+    /// @notice Number of blocks to allow repeat transactions
+    uint acceptableBlockLimts = 5;
+
+    /// @notice Transaction history of hacker, specified by their address
+    mapping(address => UserTransactions) public transactionHistory;
+
+    /// @notice User transaction struct with information on total transactions
+    struct UserTransactions {
+        address sender;
+        uint totalAmount;
+        uint prevBlockNumber;
+        uint prevAmount;
+    }
+
+    /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
 
