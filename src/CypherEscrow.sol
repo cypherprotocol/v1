@@ -68,6 +68,26 @@ contract CypherEscrow is ReentrancyGuard {
         uint prevAmount;
     }
 
+    /// we want a sliding scale for the amount of tokens that can be withdrawn. Newer users can withdraw less than older users. Maybe they make it custom? 3 tiers?
+    uint tier1TokenLimit = 1000;
+    uint tier2TokenLimit = 5000;
+    uint tier3TokenLimit = 10000;
+
+    uint tier1TimeLimit = 10 minutes;
+    uint tier2TimeLimit = 20 minutes;
+    uint tier3TimeLimit = 30 minutes;
+
+    /// @dev utility function to store the specific user
+    /// @param _sender The address of the user
+    /// @param _amount The amount of tokens being withdrawn
+    function storeUser(address _sender, uint _amount) internal {
+        UserTransactions storage user = transactionHistory[_sender];
+        user.sender = _sender;
+        user.totalAmount += _amount;
+        user.prevBlockNumber = block.number;
+        user.prevAmount = _amount;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
