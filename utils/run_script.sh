@@ -19,7 +19,7 @@ forge script $script \
     --rpc-url $RPC_URL \
     --broadcast \
     --verify \
-    --etherscan-api-key $ETHERSCAN_KEY \
+    --etherscan-api-key $ETHERSCAN_API_KEY \
     -vvvv \
     --private-key $DEPLOYER_KEY \
     $args
