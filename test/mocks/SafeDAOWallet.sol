@@ -11,7 +11,7 @@ contract SafeDAOWallet is CypherProtocol, Test {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public ethBalances;
 
-    constructor(address architect, address registry) CypherProtocol("DAOWallet", architect, registry) {}
+    constructor(address deployer, address registry) CypherProtocol("DAOWallet", deployer, registry) {}
 
     function deposit() public payable {
         ethBalances[msg.sender] += (msg.value);

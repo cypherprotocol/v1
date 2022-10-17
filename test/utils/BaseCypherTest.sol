@@ -30,7 +30,7 @@ contract BaseCypherTest is Test {
         vm.label(alice, "alice: non-cypher user");
         vm.label(bob, "bob: cypher user");
         vm.label(carol, "carol: oracle");
-        vm.label(dave, "dave: architect");
+        vm.label(dave, "dave: deployer");
         vm.label(address(this), "testContract");
 
         _deployTestContracts();
@@ -84,7 +84,7 @@ contract BaseCypherTest is Test {
         emit log_named_address(unicode"✅ Allocated tokens to", _to);
     }
 
-    function _assignEscrowAsArchitect(address _contract) internal {
+    function _assignEscrowAsDeployer(address _contract) internal {
         vm.startPrank(dave);
         registry.attachEscrow(address(escrow), _contract);
         vm.stopPrank();

@@ -7,11 +7,14 @@ Introducing Cypher, an on-chain security system to help prevent hacks. Integrate
 Deploy your contracts through our frontend with your custom parameters, extend our EscrowContract, and add these lines to your withdraw function:
 
 ```solidity
-import {CypherProtocol} from "../../src/CypherProtocol.sol";
+import { CypherProtocol } from "../../src/CypherProtocol.sol";
 
 contract MockProtocol is CypherProtocol {
-    constructor(address architect, address registry) CypherProtocol("MockProtocol", architect, registry) {}
+  constructor(address deployer, address registry)
+    CypherProtocol("MockProtocol", deployer, registry)
+  {}
 }
+
 ```
 
 ```solidity

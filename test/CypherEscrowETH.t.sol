@@ -21,7 +21,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
 
         unsafeContract = new DAOWallet();
         safeContract = new SafeDAOWallet(dave, address(registry));
-        _assignEscrowAsArchitect(address(safeContract));
+        _assignEscrowAsDeployer(address(safeContract));
 
         // Deposit ETH from non-cypher user into vulnerable contract
         vm.prank(alice);

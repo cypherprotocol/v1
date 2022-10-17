@@ -39,8 +39,8 @@ contract CypherRegistry {
                              MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier architectOnly(address protocol) {
-        require(ICypherProtocol(protocol).getArchitect() == msg.sender, "ok");
+    modifier deployerOnly(address protocol) {
+        require(ICypherProtocol(protocol).getDeployer() == msg.sender, "ok");
         _;
     }
 
@@ -66,7 +66,7 @@ contract CypherRegistry {
         uint256 tokenThreshold,
         uint256 timeLimit,
         address[] memory oracles
-    ) public architectOnly(protocol) returns (address) {
+    ) public deployerOnly(protocol) returns (address) {
         if (getEscrowForProtocol[protocol] != CypherEscrow(address(0))) revert ProtocolAlreadyRegistered();
         CypherEscrow escrow = new CypherEscrow(token, tokenThreshold, timeLimit, oracles);
         getEscrowForProtocol[protocol] = escrow;
@@ -77,7 +77,7 @@ contract CypherRegistry {
     }
 
     /// @dev Assigns an existing escrow to a protocol
-    function attachEscrow(address escrow, address protocol) public architectOnly(protocol) {
+    function attachEscrow(address escrow, address protocol) public deployerOnly(protocol) {
         getEscrowForProtocol[protocol] = CypherEscrow(escrow);
 
         emit EscrowAttached(escrow, protocol);
