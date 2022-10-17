@@ -55,7 +55,7 @@ contract CypherEscrow is ReentrancyGuard {
             2. hacker withdraws 5000 tokens in 2 transactions
      */
     /// @notice Number of blocks to allow repeat transactions
-    uint acceptableBlockLimts = 5;
+    uint256 acceptableBlockLimts = 5;
 
     /// @notice Transaction history of hacker, specified by their address
     mapping(address => UserTransactions) public transactionHistory;
@@ -63,24 +63,37 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice User transaction struct with information on total transactions
     struct UserTransactions {
         address sender;
-        uint totalAmount;
-        uint prevBlockNumber;
-        uint prevAmount;
+        uint256 totalAmount;
+        uint256 prevBlockNumber;
+        uint256 prevAmount;
     }
 
-    /// we want a sliding scale for the amount of tokens that can be withdrawn. Newer users can withdraw less than older users. Maybe they make it custom? 3 tiers?
-    uint tier1TokenLimit = 1000;
-    uint tier2TokenLimit = 5000;
-    uint tier3TokenLimit = 10000;
+    /// @notice We want a sliding scale for the amount of tokens that can be withdrawn. Newer users can withdraw less than older users. Maybe they make it custom? 3 tiers?
+    uint256 tier1TokenLimit = 1000;
+    uint256 tier2TokenLimit = 5000;
+    uint256 tier3TokenLimit = 10000;
 
-    uint tier1TimeLimit = 10 minutes;
-    uint tier2TimeLimit = 20 minutes;
-    uint tier3TimeLimit = 30 minutes;
+    uint256 tier1TimeLimit = 10 minutes;
+    uint256 tier2TimeLimit = 20 minutes;
+    uint256 tier3TimeLimit = 30 minutes;
+
+    /// @dev Tiers mapping: 1 => {tier1TokenLimit, tier1TimeLimit}, etc
+    mapping(uint256 => Tier) public tiers;
+
+    /// @dev Tier struct
+    struct Tier {
+        uint256 tokenLimit;
+        uint256 timeLimit;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            EXPERIMENT END
+    //////////////////////////////////////////////////////////////*/
 
     /// @dev utility function to store the specific user
     /// @param _sender The address of the user
     /// @param _amount The amount of tokens being withdrawn
-    function storeUser(address _sender, uint _amount) internal {
+    function storeUser(address _sender, uint256 _amount) internal {
         UserTransactions storage user = transactionHistory[_sender];
         user.sender = _sender;
         user.totalAmount += _amount;
@@ -106,6 +119,7 @@ contract CypherEscrow is ReentrancyGuard {
     event OracleAdded(address indexed user, address oracle);
     event TimeLimitSet(uint256 timeLimit);
     event AddressAddedToWhitelist(address indexed user, address whitelist);
+    event TiersAndLimitsSet(uint256[], uint256[]);
 
     /*//////////////////////////////////////////////////////////////
                                 ERRORS
@@ -156,7 +170,7 @@ contract CypherEscrow is ReentrancyGuard {
     function escrowETH(address origin, address dst) external payable nonReentrant {
         // prevent multi-hack under the radar
         // check if it is in the same block && the sum of all recent tx's is greater than the specified amount
-        
+
         // check if the stop has been overwritten by protocol owner on the frontend
         // if (msg.sender != sourceContract) revert NotSourceContract();
         if (origin == address(0) || dst == address(0)) revert NotValidAddress();
@@ -304,6 +318,21 @@ contract CypherEscrow is ReentrancyGuard {
         isOracle[_oracle] = true;
 
         emit OracleAdded(msg.sender, _oracle);
+    }
+
+    /// @dev Set limits for the different tiers
+    /// @param _tiers The array of tiers
+    /// @param _limits The array of limits associated with the tiers
+    function setTiersAndLimits(uint256[] memory _tiers, uint256[] memory _limits) external onlyOracle {
+        require(_tiers.length == _limits.length, "Tiers and limits must be the same length");
+
+        for (uint256 i = 0; i < _tiers.length; i++) {
+            /// @notice Start at 1 because 0 is the default
+            Tier memory tier;
+            tiers[i + 1] = new Tier(_tiers[i], _limits[i]);
+        }
+
+        emit TiersAndLimitsSet(_tiers, _limits);
     }
 
     /*//////////////////////////////////////////////////////////////
