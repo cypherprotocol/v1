@@ -21,7 +21,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
 
         unsafeContract = new DAOWallet();
         safeContract = new SafeDAOWallet(dave, address(registry));
-        _assignEscrowAsArchitect(address(safeContract));
+        _assignEscrowAsDeployer(address(safeContract));
 
         // Deposit ETH from non-cypher user into vulnerable contract
         vm.prank(alice);
@@ -61,7 +61,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
         vm.stopPrank();
     }
 
-    function testTransactionStoppedByEscrowOracleAccepts() public {
+    function testTransactionStoppedByEscrowVerifierAccepts() public {
         vm.startPrank(bob);
 
         assertEq(safeContract.balanceOf(bob), 100);
@@ -82,7 +82,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
         assertEq(address(bob).balance, balanceBefore + 100);
     }
 
-    function testTransactionStoppedByEscrowOracleDenies() public {
+    function testTransactionStoppedByEscrowVerifierDenies() public {
         vm.startPrank(bob);
 
         uint256 contractBalanceBefore = address(safeContract).balance;
@@ -106,7 +106,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
         assertEq(address(safeContract).balance, contractBalanceBefore);
     }
 
-    function testCannotAcceptTransactionStoppedByEscrowWhenNonOracle() public {
+    function testCannotAcceptTransactionStoppedByEscrowWhenNonVerifier() public {
         vm.startPrank(bob);
 
         assertEq(safeContract.balanceOf(bob), 100);
@@ -122,11 +122,11 @@ contract CypherEscrowETHTest is BaseCypherTest {
         uint256 contractBalanceBefore = address(safeContract).balance;
 
         vm.startPrank(alice);
-        vm.expectRevert(CypherEscrow.NotOracle.selector);
+        vm.expectRevert(CypherEscrow.NotVerifier.selector);
         escrow.acceptTransaction(key);
     }
 
-    function testCannotDenyTransactionStoppedByEscrowWhenNonOracle() public {
+    function testCannotDenyTransactionStoppedByEscrowWhenNonVerifier() public {
         vm.startPrank(bob);
 
         assertEq(safeContract.balanceOf(bob), 100);
@@ -142,7 +142,7 @@ contract CypherEscrowETHTest is BaseCypherTest {
         uint256 contractBalanceBefore = address(safeContract).balance;
 
         vm.startPrank(alice);
-        vm.expectRevert(CypherEscrow.NotOracle.selector);
+        vm.expectRevert(CypherEscrow.NotVerifier.selector);
         escrow.denyTransaction(key, alice);
     }
 

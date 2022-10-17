@@ -18,7 +18,7 @@ contract CypherEscrowERC20Test is BaseCypherTest {
         unsafeContract = new DAOWallet();
         safeContract = new SafeDAOWallet(dave, address(registry));
 
-        _assignEscrowAsArchitect(address(safeContract));
+        _assignEscrowAsDeployer(address(safeContract));
 
         _grantApprovals(alice, address(unsafeContract));
         _grantApprovals(bob, address(safeContract));

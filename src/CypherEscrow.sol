@@ -21,11 +21,11 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice The amount of tokens that will create an escrow
     uint256 public tokenThreshold;
 
-    /// @notice The amount of time before the funds can be released if no response from the oracles
+    /// @notice The amount of time before the funds can be released if no response from the verifiers
     uint256 public timeLimit;
 
-    /// @notice Allowed oracle addresses to sign off on escrowed transactions
-    mapping(address => bool) isOracle;
+    /// @notice Allowed verifier addresses to sign off on escrowed transactions
+    mapping(address => bool) isVerifier;
 
     /// @notice Whales that are whitelisted to withdraw without rate limiting
     mapping(address => bool) public isWhitelisted;
@@ -60,7 +60,7 @@ contract CypherEscrow is ReentrancyGuard {
     );
     event TransactionAccepted(bytes32 key);
     event TransactionDenied(bytes32 key);
-    event OracleAdded(address indexed user, address oracle);
+    event VerifierAdded(address indexed user, address verifier);
     event TimeLimitSet(uint256 timeLimit);
     event AddressAddedToWhitelist(address indexed user, address whitelist);
 
@@ -68,7 +68,7 @@ contract CypherEscrow is ReentrancyGuard {
                                 ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error NotOracle();
+    error NotVerifier();
     error NotValidAddress();
     error NotApproved();
     error MustBeDisapproved();
@@ -78,9 +78,9 @@ contract CypherEscrow is ReentrancyGuard {
                              MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyOracle() {
-        bool isAuthorized = isOracle[msg.sender];
-        if (!isAuthorized) revert NotOracle();
+    modifier onlyVerifier() {
+        bool isAuthorized = isVerifier[msg.sender];
+        if (!isAuthorized) revert NotVerifier();
         _;
     }
 
@@ -92,14 +92,14 @@ contract CypherEscrow is ReentrancyGuard {
         address _token,
         uint256 _tokenThreshold,
         uint256 _timeLimit,
-        address[] memory _oracles
+        address[] memory _verifiers
     ) {
         token = _token;
         tokenThreshold = _tokenThreshold;
         timeLimit = _timeLimit;
 
-        for (uint256 i = 0; i < _oracles.length; i++) {
-            isOracle[_oracles[i]] = true;
+        for (uint256 i = 0; i < _verifiers.length; i++) {
+            isVerifier[_verifiers[i]] = true;
         }
     }
 
@@ -182,12 +182,12 @@ contract CypherEscrow is ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                          ORACLE AUTH LOGIC
+                          VERIFIER AUTH LOGIC
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Send approved funds to a user
     /// @param key The key to check the Transaction struct info
-    function acceptTransaction(bytes32 key) external onlyOracle nonReentrant {
+    function acceptTransaction(bytes32 key) external onlyVerifier nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
         uint256 amount = txInfo.amount;
@@ -208,7 +208,7 @@ contract CypherEscrow is ReentrancyGuard {
     /// @notice Sends the funds back to the protocol- needs to be after they have fixed the exploit
     /// @param key The key to check the Transaction struct info
     /// @param to Address to redirect the funds to (in case protocol is compromised or cannot handle the funds)
-    function denyTransaction(bytes32 key, address to) external onlyOracle nonReentrant {
+    function denyTransaction(bytes32 key, address to) external onlyVerifier nonReentrant {
         Transaction memory txInfo = getTransactionInfo[key];
 
         // update storage first to prevent reentrancy
@@ -234,7 +234,7 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Set the timelimit for the tx before reverting
     /// @param _timeLimit The time limit in seconds
-    function setTimeLimit(uint256 _timeLimit) external onlyOracle {
+    function setTimeLimit(uint256 _timeLimit) external onlyVerifier {
         timeLimit = _timeLimit;
 
         emit TimeLimitSet(timeLimit);
@@ -242,7 +242,7 @@ contract CypherEscrow is ReentrancyGuard {
 
     /// @notice Add an address to the whitelist
     /// @param to The addresses to add to the whitelist
-    function addToWhitelist(address[] memory to) external onlyOracle {
+    function addToWhitelist(address[] memory to) external onlyVerifier {
         for (uint256 i = 0; i < to.length; i++) {
             isWhitelisted[to[i]] = true;
 
@@ -250,13 +250,13 @@ contract CypherEscrow is ReentrancyGuard {
         }
     }
 
-    /// @dev Add a new oracle
-    /// @param _oracle The address of the new oracle
-    /// @notice Can only come from a current oracle
-    function addOracle(address _oracle) external onlyOracle {
-        isOracle[_oracle] = true;
+    /// @dev Add a new verifier
+    /// @param _verifier The address of the new verifier
+    /// @notice Can only come from a current verifier
+    function addVerifier(address _verifier) external onlyVerifier {
+        isVerifier[_verifier] = true;
 
-        emit OracleAdded(msg.sender, _oracle);
+        emit VerifierAdded(msg.sender, _verifier);
     }
 
     /*//////////////////////////////////////////////////////////////

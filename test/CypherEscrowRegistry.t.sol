@@ -27,10 +27,10 @@ contract CypherEscrowRegistryTest is BaseCypherTest {
 
     function testCannotCreateEscrowWhenProtocolAlreadyRegistered() public {
         vm.startPrank(dave);
-        registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, oracles);
+        registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, verifiers);
 
         vm.expectRevert(CypherRegistry.ProtocolAlreadyRegistered.selector);
-        registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, oracles);
+        registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, verifiers);
         vm.stopPrank();
     }
 }
