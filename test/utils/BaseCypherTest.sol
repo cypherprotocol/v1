@@ -24,19 +24,19 @@ contract BaseCypherTest is Test {
     MockProtocol internal protocol;
 
     MockERC20[] erc20s;
-    address[] oracles;
+    address[] verifiers;
 
     function setUp() public virtual {
         vm.label(alice, "alice: non-cypher user");
         vm.label(bob, "bob: cypher user");
-        vm.label(carol, "carol: oracle");
+        vm.label(carol, "carol: verifier");
         vm.label(dave, "dave: deployer");
         vm.label(address(this), "testContract");
 
         _deployTestContracts();
 
         erc20s = [token1, token2, token3];
-        oracles = [carol];
+        verifiers = [carol];
 
         _deployContracts();
 
@@ -52,7 +52,7 @@ contract BaseCypherTest is Test {
 
         vm.prank(dave);
         escrow = CypherEscrow(
-            registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, oracles)
+            registry.createEscrow(address(protocol), address(token1), THRESHOLD, EXPIRY_DURATION, verifiers)
         );
     }
 

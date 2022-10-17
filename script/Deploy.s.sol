@@ -17,9 +17,9 @@ contract Deploy is Script {
         MockERC20 mockERC20 = new MockERC20();
         SafeDAOWallet daoWallet = new SafeDAOWallet(address(msg.sender), address(cypherRegistry));
 
-        // address[] memory oracles = new address[](1);
-        // oracles[0] = msg.sender;
-        // cypherRegistry.createEscrow(address(daoWallet), address(mockERC20), 100, 1 days, oracles);
+        // address[] memory verifiers = new address[](1);
+        // verifiers[0] = msg.sender;
+        // cypherRegistry.createEscrow(address(daoWallet), address(mockERC20), 100, 1 days, verifiers);
         vm.stopBroadcast();
     }
 }
